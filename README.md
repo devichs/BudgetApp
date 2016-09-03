@@ -8,3 +8,5 @@ Home(index)
 --Update Budget
 --Expense List
 --Add Expense
+
+Put all the files in one folder.  Run manage_receipts.py from that folder. Recommended to run http:/localhost:8080 from Chrome browser.
