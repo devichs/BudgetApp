@@ -9,7 +9,7 @@ import sys
 def sf(filename):
 	return static_file(filename,root = ".\\")
 
-@route("/index")	
+@route("/index")
 def index():
 	output = template("index")
 	return output
