@@ -1,0 +1,32 @@
+body {
+	font-family: Arial,Verdana,sans-serif;
+	color #111111;
+}
+
+ul {
+    list-style:none;
+    padding:0;	
+}
+
+li {
+    display: block;
+    padding: 9px;
+    border:1px solid #DDDDDD;
+    margin-bottom: 10px;
+    border-radius: 5px;
+	width: 200px;
+	text-align: center;
+	background-color: #D3D3D3;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+a {
+	text-decoration: none;
+	font-size: 120%;
+	color: black;
+}
+
+a:hover{
+	color: white;
+}
