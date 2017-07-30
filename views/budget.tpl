@@ -2,14 +2,14 @@
 <html>
 	<head>
 		<title>Receipts - Budget</title>
-		<link rel = "stylesheet" href = "budget-style.css">
-		<script src="sorttable.js"></script>
+		<link rel = "stylesheet" href = "static\content\budget-style.css">
+		<script src="static\scripts\sorttable.js"></script>
 	</head>
 		<body>
 			<ul>
-				<li><a href = "http://localhost:8080/newbudget">Update Budget</a></li>
-				<li><a href = "http://localhost:8080/list">Expense List</a></li>
-				<li><a href = "http://localhost:8080/index">Home</a></li>
+				<li><a href = "http://localhost:5555/newbudget">Update Budget</a></li>
+				<li><a href = "http://localhost:5555/list">Expense List</a></li>
+				<li><a href = "http://localhost:5555/">Home</a></li>
 			</ul>
 				<table class = "sortable centered budget">
 				<caption>Budget</caption>

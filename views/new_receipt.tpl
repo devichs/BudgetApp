@@ -2,8 +2,8 @@
 <html>
 	<head>
 		<title>Receipts</title>
-		<link rel = "stylesheet" href = "new-style.css">
-		<script src="sorttable.js"></script>
+		<link rel = "stylesheet" href = "static\content\new-style.css">
+		<script src="static\scripts\sorttable.js"></script>
 		<script type="text/javascript">
 		//auto expand textarea
 		function adjust_textarea(h) {
@@ -14,10 +14,10 @@
 	</head>
 		<body>
 			<ul class = "ulmenu">
-				<li class = "limenu"><a class = "amenu" href = "http://localhost:8080/budget">Budget</a></li>
-				<li class = "limenu"><a class = "amenu" href = "http://localhost:8080/list">Expense List</a></li>
-				<li class = "limenu"><a class = "amenu" href = "http://localhost:8080/index">Home</a></li>
-				<li class = "limenu"><a class = "amenu" href = "http://localhost:8080/budget">Cancel</a></li>		
+				<li class = "limenu"><a class = "amenu" href = "http://localhost:5555/budget">Budget</a></li>
+				<li class = "limenu"><a class = "amenu" href = "http://localhost:5555/list">Expense List</a></li>
+				<li class = "limenu"><a class = "amenu" href = "http://localhost:5555/">Home</a></li>
+				<li class = "limenu"><a class = "amenu" href = "http://localhost:5555/budget">Cancel</a></li>		
 			</ul>
 				<fieldset>
 					<legend>Add a new item to the list:</legend>
@@ -47,16 +47,7 @@
 	
 							<li>
 								<label for="ui">UI</label>
-								<!--<input type="text" maxlength="30" name="ui" required = "required"/>-->
-								<input list = "UI">
-								<datalist id = "UI">
-									<option value = "GL">
-									<option value = "EA">
-									<option value = "PG">
-									<option value = "LB">
-									<option value = "Bottle">
-									<option value = "OZ">
-								</datalist>
+								<input type="text" maxlength="30" name="ui" required = "required"/>
 								<span>Enter the Unit of Issue here</span>
 							</li>
 							<li>

@@ -2,16 +2,16 @@
 <html>
 	<head>
 		<title>Receipts</title>
-		<link rel = "stylesheet" href = "list-style.css">
-		<script src="sorttable.js"></script>
+		<link rel = "stylesheet" href = "static\content\list-style.css">
+		<script src="static\scripts\sorttable.js"></script>
 	</head>
 		<body>
 			<div class = "nav"><!--navigation menu-->
 				<ul class = "nav">
-					<li><a href = "http://localhost:8080/new">New Expense</a></li>
-					<li><a href = "http://localhost:8080/budget">Budget</a></li>
-					<li><a href = "http://localhost:8080/index">Home</a></li>
-					<li><a href = "http://localhost:8080/list">Import Expense List</a></li>
+					<li><a href = "http://localhost:5555/new">New Expense</a></li>
+					<li><a href = "http://localhost:5555/budget">Budget</a></li>
+					<li><a href = "http://localhost:5555/">Home</a></li>
+					<li><a href = "http://localhost:5555/list">Import Expense List</a></li>
 				</ul>
 			</div><!--end navigation menu-->
 					<table class = "sortable centered">

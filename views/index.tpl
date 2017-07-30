@@ -7,7 +7,7 @@
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <link rel = "stylesheet" href = "index-style.css">
+        <link rel = "stylesheet" href = "static\content\index-style.css">
         <!-- Place favicon.ico in the root directory -->
 
 			<script type="text/javascript">
@@ -24,13 +24,13 @@
         <!-- Add your site or application content here -->
 		<ul>
 		
-			<li><a href = "http://localhost:8080/budget">Budget</a></li>
+			<li><a href = "http://localhost:5555/budget">Budget</a></li>
 		
-			<li><a href = "http://localhost:8080/newbudget">Update Budget</a></li>
+			<li><a href = "http://localhost:5555/newbudget">Update Budget</a></li>
 		
-			<li><a href = "http://localhost:8080/list">Expense List</a></li>
+			<li><a href = "http://localhost:5555/list">Expense List</a></li>
 							
-			<li><a href = "http://localhost:8080/new">Add Expense</a></li>
+			<li><a href = "http://localhost:5555/new">Add Expense</a></li>
 			
 		<ul>
         <script src="https://code.jquery.com/jquery-3.1.0.min.js"></script>

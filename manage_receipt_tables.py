@@ -31,12 +31,5 @@ amount integer,
 budgetdate datetime default current_timestamp);
 """)
 con.commit()
+con.close()
 
-"""
-table name: whatsleft
-A secondary table that provides the user a running total of 'What's Left' of their budget 
-"""
-c.executescript("""
-create table if not exists budget(
-id integer not null primary key unique,
-)
