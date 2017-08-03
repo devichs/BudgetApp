@@ -25,21 +25,11 @@ def list():
     con = sqlite3.connect("receipts.sqlite")
     c = con.cursor()
     c.execute("""
-    select * from receipts
+    select id,store,category,item,quantity,ui,cast(cost as real) / 100  as cost,purchasedate from receipts
     """)
     result = c.fetchall()
     output = template("list",rows = result)
     return output
-
-@route('/about')
-@view('about')
-def about():
-    """Renders the about page."""
-    return dict(
-        title='About',
-        message='Your application description page.',
-        year=datetime.now().year
-    )
 
 @route("/budget")
 def  budget():
