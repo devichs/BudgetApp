@@ -47,3 +47,8 @@ ToDo
 [Near Future]:
 1. Better flow and navigation
 2. Remove the "Apple Mobile App" type css 
+3. Add Editing cabability to receipt list 
+4. Add Delete capability to receipt list
+5. Figure out "cost" data type in sqlite 
+6. Add UI of lookup table for drop down menu
+7. Hard code "purchase date" value to "m/d/yyyy"
