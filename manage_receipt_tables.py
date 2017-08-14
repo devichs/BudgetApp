@@ -13,9 +13,10 @@ store text,
 category text,
 item text,
 quantity text,
-ui text,
+ui char(2) NOT NULL,
 cost integer,
-purchasedate date);
+purchasedate date,
+FOREIGN KEY(ui) REFERENCES uilookup(ui));
 """)
 con.commit()
 
@@ -39,15 +40,16 @@ This is a lookup table to provide a drop down menu of unit of issue
 c.executescript("""
 create table if not exists uilookup(
 id integer not null primary key unique,
-ui text,
+ui char(2) NOT NULL,
 description text);
-"""
-con.commit();
+""")
+con.commit()
+
 """
 insert the data into uilookup
 """
 c.executescript("""
-insert into uilookup(ui,description)values('AM','Ampoule'));
+insert into uilookup(ui,description)values('AM','Ampoule');
 insert into uilookup(ui,description)values('AT','Assortment');
 insert into uilookup(ui,description)values('AY','Assembly');
 insert into uilookup(ui,description)values('BA','Ball');
@@ -145,7 +147,7 @@ insert into uilookup(ui,description)values('RL','Reel');
 insert into uilookup(ui,description)values('RM','Ream');
 insert into uilookup(ui,description)values('RO','Roll');
 insert into uilookup(ui,description)values('RX','Thousand Rounds');
-insert into uilookup(ui,description)values('SD','Skid);
+insert into uilookup(ui,description)values('SD','Skid');
 insert into uilookup(ui,description)values('SE','Set');
 insert into uilookup(ui,description)values('SF','Square Foot');
 insert into uilookup(ui,description)values('SH','Sheet');
@@ -169,7 +171,6 @@ insert into uilookup(ui,description)values('TU','Tube');
 insert into uilookup(ui,description)values('US','U.S.P. Unit');
 insert into uilookup(ui,description)values('VI','Vial');
 insert into uilookup(ui,description)values('YD','Yard');
-
-"""
+""")
 con.close()
 

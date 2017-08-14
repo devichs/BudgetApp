@@ -21,7 +21,6 @@ def home():
 @route('/list')
 @view('list')
 def list():
-    """Renders the contact page."""
     con = sqlite3.connect("receipts.sqlite")
     c = con.cursor()
     c.execute("""
@@ -38,11 +37,11 @@ def  budget():
 	c.execute("""
 	select distinct '$' || amount, date(budgetdate) as 'DateSet','$' || r.cost as 'ExpensesTotal','$' || cast((x.budget - r.cost) as float) as 'WhatsLleft'
         from budget b,
-        (select sum(cost)cost from receipts)r,
+        (select sum(cast(cost as real) / 100 )cost from receipts where purchasedate >= (select max(date(budgetdate)) from budget))r,
 	(select distinct amount as budget,id  from budget where id in (
 	select max(id) from budget))x
 	where b.id in (
-	select max(id) from budget)
+	select max(id) from budget) 
 	order by b.budgetdate desc	
 	""")
 	result = c.fetchall()	
