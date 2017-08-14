@@ -4,6 +4,7 @@ A python web app using bottle and a sqlite db.
 Current functionality limited to setting a budget, adding purchases to a "receipt" list and, subtracting those receipts from the budget. 
 
 Page structure: 
+<pre>
 Home(index)
 --Budget
 	--Update Budget
@@ -22,7 +23,8 @@ Home(index)
 	--Budget 
 	--Expense list
 	--Home 
-	--Cance
+	--Cancel
+</pre>
 
 Requirements: 
 Works with python 3.6, bottle 12.13
