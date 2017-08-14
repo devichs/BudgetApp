@@ -49,6 +49,6 @@ ToDo
 2. Remove the "Apple Mobile App" type css 
 3. Add Editing cabability to receipt list 
 4. Add Delete capability to receipt list
-5. Figure out "cost" data type in sqlite 
-6. Add UI of lookup table for drop down menu
-7. Hard code "purchase date" value to "m/d/yyyy"
+5. Figure out "cost" data type in sqlite -- Done 8/13/2017 
+6. Add UI of lookup table for drop down menu[Added foreign key to receipts table]
+7. Hard code "purchase date" value to "m/d/yyyy" -- Done 8/13/2017 [hard coded drop down lists for Store,Category,and UI]
