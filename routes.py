@@ -24,7 +24,7 @@ def list():
     con = sqlite3.connect("receipts.sqlite")
     c = con.cursor()
     c.execute("""
-    select id,store,category,item,quantity,ui,cast(cost as real) / 100  as cost,purchasedate from receipts
+    select id,store,category,item,quantity,ui,'$' || cast(cost as float) as cost,purchasedate from receipts
     """)
     result = c.fetchall()
     output = template("list",rows = result)
@@ -35,9 +35,9 @@ def  budget():
 	con = sqlite3.connect("receipts.sqlite")
 	c = con.cursor()
 	c.execute("""
-	select distinct '$' || amount, date(budgetdate) as 'DateSet','$' || r.cost as 'ExpensesTotal','$' || cast((x.budget - r.cost) as float) as 'WhatsLleft'
+	select distinct '$' || cast(amount as float) as 'amount', date(budgetdate) as 'DateSet','$' || r.cost as 'ExpensesTotal','$' || cast((x.budget - r.cost) as float) as 'WhatsLleft'
         from budget b,
-        (select sum(cast(cost as real) / 100 )cost from receipts where purchasedate >= (select max(date(budgetdate)) from budget))r,
+        (select sum(cost)cost from receipts where purchasedate >= (select max(date(budgetdate)) from budget))r,
 	(select distinct amount as budget,id  from budget where id in (
 	select max(id) from budget))x
 	where b.id in (
