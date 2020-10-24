@@ -15,8 +15,7 @@ item text,
 quantity text,
 ui char(2) NOT NULL,
 cost integer,
-purchasedate date,
-FOREIGN KEY(ui) REFERENCES uilookup(ui));
+purchasedate date);
 """)
 con.commit()
 
