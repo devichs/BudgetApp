@@ -26,32 +26,39 @@
 							<li>
 								<label for="store">Store</label>
 								<select name="store">	
-									<option value="Wal Mart">Wal Mart</option>
-									<option value="Costco">Costco</option>
-									<option value="Winco">Winco</option>
+									<option value="99 cent Store">99 cent Store</option>
 									<option value="Aldi's">Aldi's</option>
+									<option value="Cash and Carry">Cash and Carry</option>
+									<option value="Costco">Costco</option>
 									<option value="CVS">CVS</option>
 									<option value="Dollar Store">Dollar Store</option>
-									<option value="99 cent Store">99 cent Store</option>
-									<option value="Cash and Carry">Cash and Carry</option>
-									<option value="Target">Cash and Carry</option>
+									<option value="Target">Target</option>
+									<option value="Wal Mart">Wal Mart</option>
+									<option value="Winco">Winco</option>
 								</select>
 								<span>Enter the name of the Store here</span>
 							</li>
 							<li>
 								<label for="category">Category</label>
 									<select name="category">	
-										<option value="Fruit">Fruit</option>
-										<option value="Dairy">Dairy</option>
-										<option value="Meat">Meat</option>
-										<option value="Household Item">Household Item</option>
+										<option value="Apparel">Apparel</option>
 										<option value="Automotive">Automotive</option>
-										<option value="Vegetable">Vegetable</option>
-										<option value="Freezer Item">Freezer Item</option>
 										<option value="Bakery">Bakery</option>
+										<option value="Bathroom Item">Bathroom Item</option>
+										<option value="Beverage">Beverage</option>
+										<option value="Dairy">Dairy</option>
 										<option value="Deli">Deli</option>
-										<option value="Clothes">Clothes</option>
 										<option value="Dry Goods">Dry Goods</option>
+										<option value="Food Spice">Food Spice</option>
+										<option value="Freezer Item">Freezer Item</option>
+										<option value="Fruit">Fruit</option>
+										<option value="Grocery">Grocery</option>
+										<option value="Health And Beauty">Health And Beauty</option>
+										<option value="Household Item">Household Item</option>
+										<option value="Kitchen Item">Kitchen Item</option>
+										<option value="Meat">Meat</option>
+										<option value="Medical Item">Medical Item</option>
+										<option value="Vegetable">Vegetable</option>
 									</select>
 								<span>Enter the item Category here</span>
 							</li>
