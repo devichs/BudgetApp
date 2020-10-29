@@ -34,6 +34,7 @@
 									<option value="Dollar Store">Dollar Store</option>
 									<option value="99 cent Store">99 cent Store</option>
 									<option value="Cash and Carry">Cash and Carry</option>
+									<option value="Target">Cash and Carry</option>
 								</select>
 								<span>Enter the name of the Store here</span>
 							</li>
