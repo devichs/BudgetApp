@@ -14,7 +14,7 @@ category text,
 item text,
 quantity text,
 ui char(2) NOT NULL,
-cost integer,
+cost decimal(10,5),
 purchasedate date);
 """)
 con.commit()

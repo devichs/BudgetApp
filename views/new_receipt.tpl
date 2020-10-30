@@ -52,6 +52,7 @@
 										<option value="Food Spice">Food Spice</option>
 										<option value="Freezer Item">Freezer Item</option>
 										<option value="Fruit">Fruit</option>
+										<option value="Garden">Garden</option>
 										<option value="Grocery">Grocery</option>
 										<option value="Health And Beauty">Health And Beauty</option>
 										<option value="Household Item">Household Item</option>
@@ -204,7 +205,7 @@
 							</li>
 							<li>
 								<label for="cost">Cost</label>
-								<input type="number" min="1" step="any" pattern="(^\\$?(([1-9](\\d*|\\d{0,2}(,\\d{3})*))|0)(\\.\\d{1,2})?$)" name="cost" required = "required"/>
+								<input type="number" step="any" pattern="(^\\$?(([1-9](\\d*|\\d{0,2}(,\\d{3})*))|0)(\\.\\d{1,2})?$)" name="cost" required = "required"/>
 								<span>Enter how much the item cost here</span>
 							</li>
 							<li>
