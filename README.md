@@ -41,7 +41,7 @@ How to run:
 
 3. Manage your receipts and budget 
 
-ToDo 
-[Future]: 
+ToDo: 
 1. Build out Import Expense List.  This would be a .csv or other file type from a finance account to add to your expense list. 
 2. Build out an OCR to text capability to scan receipts and load into the app.
+3. Convert to virtenv.
