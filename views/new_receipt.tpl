@@ -35,6 +35,13 @@
 									<option value="Target">Target</option>
 									<option value="Wal Mart">Wal Mart</option>
 									<option value="Winco">Winco</option>
+									<option value="Sams">Sam's</option>
+									<option value="Whole Foods">Whole Foods</option>
+									<option value="Burger King">Burger King</option>
+									<option value="McDonalds">McDonalds</option>
+									<option value="Other Restaurant">Other Restaurant</option>
+									<option value="Other Fast Food">Other Fast Food</option>
+									
 								</select>
 								<span>Enter the name of the Store here</span>
 							</li>
@@ -60,6 +67,8 @@
 										<option value="Meat">Meat</option>
 										<option value="Medical Item">Medical Item</option>
 										<option value="Vegetable">Vegetable</option>
+										<option value="Restaurant">Restaurant</option>
+										<option value="Fast Food">Fast Food</option>
 									</select>
 								<span>Enter the item Category here</span>
 							</li>
