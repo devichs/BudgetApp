@@ -32,8 +32,8 @@ Home(index)
 </pre>
 
 ## Requirements: 
-python 3.9
-bottle 3.8 (see bottlepy.org for more details)
+1. python 3.9
+2. bottle 3.8 (see bottlepy.org for more details)
 
 ## How to run: 
 1. Create the database with manage_receipt_tables.py
