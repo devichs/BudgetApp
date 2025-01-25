@@ -11,20 +11,20 @@ Current functionality limited to setting a budget, adding purchases to a "receip
 ## Page structure: 
 <pre>
 Home(index)
---Budget
+Budget
 	--Update Budget
 	--Expense List
 	--Home
---Update Budget
+Update Budget
 	--Budget
 	--Home
 	--Cancel
---Expense List
+Expense List
 	--New Expense 
 	--Budget 
 	--Home 
 	--Import Expense List [shell, future functionality]
---Add Expense
+Add Expense
 	--Budget 
 	--Expense list
 	--Home 
