@@ -39,7 +39,7 @@ Add Expense
 1. Create the database with manage_receipt_tables.py
 	python .\manage_receipt_tables.py 
 	
-	Builds two tables, "reciepts" and "budget"
+	Builds three tables, "reciepts", "uilookkup", and "budget"
 
 2. Run, python .\app.py
 
