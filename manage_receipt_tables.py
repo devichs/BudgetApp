@@ -49,7 +49,7 @@ description text);
 insert the data into uilookup
 """
 
-csv_file_path = "/Volumes/AllShare/VadaPav/git/BudgetApp/ui.txt"
+csv_file_path = "/Volumes/AllShare/VadaPav/git/BudgetApp/ui.csv"
 
 with open(csv_file_path,"r") as cvs_file:
     reader = csv.reader(cvs_file)
