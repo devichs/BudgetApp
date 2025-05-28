@@ -46,6 +46,34 @@ description text);
 #con.commit()
 
 """
+table name: transactions
+This table is used to hold transactions imported from core accounts
+"""
+c.executescript("""
+create table if not exists transacitons(
+                id integer not null primary key autoincrement,
+                transaction_date text not null,
+                description text not null,
+                amount real not null,
+                category_id integer,
+                notes text,
+                created_at datetime default currrent_timestamp,
+                foreign key (category_id) references categories(id)
+                );
+""")
+
+"""
+table name: categories
+This table is used to hold categories for transactions
+"""
+c.executescript("""
+                create table if not exists categories(
+                id integer primary key autoincrement,
+                name text not null unique
+                );
+""")
+                
+"""
 insert the data into uilookup
 """
 
