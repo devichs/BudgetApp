@@ -39,6 +39,9 @@
 									<option value="Whole Foods">Whole Foods</option>
 									<option value="Burger King">Burger King</option>
 									<option value="McDonalds">McDonalds</option>
+									<option value="Kohls">Kohls</option>
+									<option value="Little Caesar's">Little Caesar's</option>
+									<option value="Pizza Hut">Pizza Hut</option>
 									<option value="Other Restaurant">Other Restaurant</option>
 									<option value="Other Fast Food">Other Fast Food</option>
 									
