@@ -50,7 +50,7 @@ table name: transactions
 This table is used to hold transactions imported from core accounts
 """
 c.executescript("""
-create table if not exists transacitons(
+create table if not exists transactions(
                 id integer not null primary key autoincrement,
                 transaction_date text not null,
                 description text not null,
