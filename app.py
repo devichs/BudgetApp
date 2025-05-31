@@ -10,8 +10,6 @@ import sys
 import routes
 
 if '--debug' in sys.argv[1:] or 'SERVER_DEBUG' in os.environ:
-    # Debug mode will enable more verbose output in the console window.
-    # It must be set at the beginning of the script.
     bottle.debug(True)
 
 def wsgi_app():
@@ -34,6 +32,13 @@ if __name__ == '__main__':
         When running under a production server such as IIS or Apache,
         the server should be configured to serve the static files."""
         return bottle.static_file(filepath, root=STATIC_ROOT)
+
+    # Define variables for use across templates
+    from bottle import SimpleTemplate
+    import datetime
+    SimpleTemplate.defaults["datetime"] = datetime
+    SimpleTemplate.defaults["site_name"] = "What's Left!"
+    SimpleTemplate.defaults["current_year"] = '2025'
 
     # Starts a local test server.
     bottle.run(server='wsgiref', host=HOST, port=PORT,reloader = True,debug = True)

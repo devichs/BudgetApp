@@ -28,5 +28,25 @@ a {
 }
 
 a:hover{
-	color: white;
+	color: blue;
+}
+
+.site-header {
+    text-align: center;
+    display: block;
+    padding: 9px;
+    border:1px solid #DDDDDD;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    margin-left: auto;
+	margin-right: auto;
+    width: 400px;
+}
+
+.site-footer {
+    text-align: center;
+}
+
+.menu-container {
+    text-align: center;    
 }
