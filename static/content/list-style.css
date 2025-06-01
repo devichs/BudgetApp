@@ -39,7 +39,7 @@ th {
 }
 
 tr.even {
-	bacground-color: #efefef;
+	background-color: #efefef;
 }
 
 tr:hover {
@@ -72,4 +72,8 @@ a {
 
 a:hover{
 	color: white;
+}
+
+p {
+	text-align: center;
 }

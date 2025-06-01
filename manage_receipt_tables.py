@@ -35,7 +35,8 @@ def setup_database():
                 quantity TEXT,
                 ui CHAR(2) NOT NULL,
                 cost REAL, -- Changed to REAL for monetary values
-                purchasedate DATE
+                purchasedate DATE,
+                status TEXT DEFAULT 'open'
             );
         """)
         print("Table 'receipts' checked/created.")

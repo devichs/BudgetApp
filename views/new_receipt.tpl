@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>Receipts</title>
+		<title>Receipts - Budget</title>
+		<link rel = "stylesheet" href = "static\content\new-budget-style.css">
+		<script src="static\scripts\sorttable.js"></script>
 		<link rel = "stylesheet" href = "static\content\new-style.css">
 		<script src="static\scripts\sorttable.js"></script>
 		<script type="text/javascript">
@@ -14,10 +16,10 @@
 	</head>
 		<body>
 			<ul class = "ulmenu">
-				<li class = "limenu"><a class = "amenu" href = "http://localhost:5555/budget">Budget</a></li>
-				<li class = "limenu"><a class = "amenu" href = "http://localhost:5555/list">Expense List</a></li>
-				<li class = "limenu"><a class = "amenu" href = "http://localhost:5555/">Home</a></li>
-				<li class = "limenu"><a class = "amenu" href = "http://localhost:5555/budget">Cancel</a></li>		
+				<li class = "limenu"><a class = "amenu" href = "/budget">Go To Budget</a></li>
+				<li class = "limenu"><a class = "amenu" href = "/list">Expense List</a></li>
+				<li class = "limenu"><a class = "amenu" href = "/budget">Cancel New Expense</a></li>	
+				<li class = "limenu"><a class = "amenu" href = "http://localhost:5555/">Home</a></li>	
 			</ul>
 				<fieldset>
 					<legend>Add a new item to the list:</legend>

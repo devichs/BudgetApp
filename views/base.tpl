@@ -21,16 +21,12 @@
 					<h1><a href="/home">What's Left!</a></h1>
 				</div>
 			</header>
-				<div class="menu-container">
-					<h3>Menu</h3>
-				</div>
-	
-			<main class="site-content">
-				<div class="container">
-					% include # content of the child template inserted here.
-				</div>
-			</main>
-	
+				<main class="site-content">
+					<div class="container">
+						% include # content of the child template inserted here.
+					</div>
+				</main>
+				
 			<footer class="site-footer">
 				<div class="container">
 					<p>&copy; {{ locals().get('current_year', '2025') }} What's Left!</p>
