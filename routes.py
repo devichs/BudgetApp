@@ -28,7 +28,7 @@ def home():
         con = sqlite3.connect("receipts.sqlite")
         c = con.cursor()
         c.execute(""" 
-        select id,store,category,item,quantity,ui,'$' || cast(cost as float) as cost,purchasedate from receipts
+        select id,store,category,item,quantity,ui,'$' || cast(cost as float) as cost,purchasedate,status from receipts
         """)
 
         result = c.fetchall()
@@ -74,7 +74,55 @@ def home():
             url = "http://localhost:5555/list"
             return"<p>The new receipt was inserted into the database, the ID is {0} </p><p><a href = http://localhost:5555/list>List</a></p><p><a href = http://localhost:5555/new>New Expense</a></p>".format(new_id)
         else:
-            return template("new_receipt.tpl")    
+            return template("new_receipt.tpl") 
+
+    
+    @route('/edit/<receipt_id:int>', method='GET')
+    @view('edit_receipt') 
+    def show_edit_receipt_form(receipt_id):
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        c.execute("SELECT store, category, item, quantity, ui, cost, purchasedate,status FROM receipts WHERE id = ?", (receipt_id,))
+        receipt_data = c.fetchone()
+        c.close()
+        conn.close()
+
+        if receipt_data:
+            return dict(
+                no=receipt_id,
+                old_data=receipt_data,
+
+            )
+        else:
+            return "Receipt not found!"  
+        
+    @route('/edit/<receipt_id:int>', method='POST')
+    def process_edit_receipt_form(receipt_id):
+        store = request.forms.get('store').strip()
+        category = request.forms.get('category').strip()
+        item = request.forms.get('item').strip()
+        quantity = request.forms.get('quantity').strip()
+        ui = request.forms.get('ui').strip()
+        cost = request.forms.get('cost').strip() # Should validate as float
+        purchasedate = request.forms.get('purchasedate').strip() # Should validate as date
+        # status = request.forms.get('status') # If you implement status
+
+        # TODO: Validate data (e.g., cost is a number, date format is correct)
+
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        c.execute("""
+            UPDATE receipts 
+            SET store = ?, category = ?, item = ?, quantity = ?, ui = ?, cost = ?, purchasedate = ?
+            WHERE id = ?
+        """, (store, category, item, quantity, ui, float(cost), purchasedate, receipt_id)) # Add status if implemented
+        conn.commit()
+        c.close()
+        conn.close()
+
+        # return f"Receipt {receipt_id} updated. <a href='/list'>Back to list</a>"
+        from bottle import redirect # make sure redirect is imported
+        redirect('/list') # Redirect to the list page after successful update      
     
     @route("/newbudget",method = "GET") 
     def new_budget():
