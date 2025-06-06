@@ -1,5 +1,5 @@
 %# views/new-receipt.tpl
-% rebase('base.tpl', title='New Receipts - What\'s Left!', load_base_style=False,current_year=current_year, page_specific_css=['new-style.css'])
+% rebase('base.tpl', title='New Receipts - What\'s Left!', current_year=current_year, load_base_style=True, page_specific_css=['new-style.css'])
 
 	<head> 
 		<script type="text/javascript">
@@ -11,16 +11,16 @@
 		</script>
 	</head>
 		<body>
-			<ul class = "ulmenu">
-				<li class = "limenu"><a class = "amenu" href = "/budget">Go To Budget</a></li>
-				<li class = "limenu"><a class = "amenu" href = "/list">View Expense List</a></li>
-				<li class = "limenu"><a class = "amenu" href = "/budget">Cancel New Expense</a></li>	
-				<li class = "limenu"><a class = "amenu" href = "http://localhost:5555/">Home</a></li>	
+			<ul class = "ulmainmenu">
+				<li class = "limainmenu"><a class = "amenu" href = "/budget">Go To Budget</a></li>
+				<li class = "limainmenu"><a class = "amenu" href = "/list">View Expense List</a></li>
+				<li class = "limainmenu"><a class = "amenu" href = "/budget">Cancel New Expense</a></li>	
+				<li class = "limainmenu"><a class = "amenu" href = "http://localhost:5555/">Home</a></li>	
 			</ul>
 				<fieldset>
-					<legend>Add a new item to the list:</legend>
+					<legend>Add a new item to the expense list:</legend>
 						<form class = "new-item" action="/new" method="GET">
-							<ul>
+							<ul class = "ulnewitemenu">
 							<li>
 								<label for="store">Store</label>
 								<select name="store">	

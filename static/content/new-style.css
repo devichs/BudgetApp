@@ -1,49 +1,9 @@
-body {
-	font-family: Arial,Verdana,sans-serif;
-	color: #080808;
-}
-
-table.budget{
-	width: 900px;
-}
-
-table.centered{
-	margin-left: auto;
-	margin-right: auto;
-	width: 1200px;
-}
-
-th,td {
-	padding: 7px 10px 10px 10px;
-}
-
-th {
-	text-transform: uppercase;
-	letter-spacing: 0.1em;
-	font-size: 90%;
-	border-bottom: 2px solid #111111;
-	border-top: 1px solid #999;
-	text-align: left;
-}
-
-tr.even {
-	background-color: #efefef;
-}
-
-tr:hover {
-	background-color: #c3e6e5;
-}
-
-.money {
-	text-align: right;
-}
-
-ul.ulmenu {
+ul.ulmainmenu {
     list-style:none;
     padding:0;	
 }
 
-li.limenu {
+li.limainmenu {
     display: block;
     padding: 9px;
     border:1px solid #DDDDDD;
@@ -64,23 +24,6 @@ a.amenu {
 
 a.amenu:hover{
 	color: white;
-}
-
-.site-header .container,
-.site-footer .container {
-    display: block;
-    padding: 9px;
-    border:1px solid #DDDDDD;
-    margin-bottom: 10px;
-    border-radius: 5px;
-	width: 400px;
-	text-align: center;
-	background-color: #D3D3D3;
-	margin-left: auto;
-	margin-right: auto;
-    font-family: Arial,Verdana,sans-serif;
-	color: #080808;
-    font-size: 100%;
 }
 
 fieldset {
@@ -105,23 +48,6 @@ legend {
 	margin-right: auto;
 }
 
-ul {
-    list-style:none;
-    padding:0;
-    margin:0;  
-}
-li {
-    display: block;
-    padding: 9px;
-    border:1px solid #DDDDDD;
-    margin-bottom: 10px;
-    border-radius: 3px;
-}
-
-a {
-	text-decoration: none;
-}
-
 form.new-item{
     max-width:400px;
     margin:50px auto;
@@ -129,19 +55,13 @@ form.new-item{
     border-radius:2px;
     padding:20px;
 }
-form.new-item h1{
-    display: block;
-    text-align: center;
-    padding: 0;
-    margin: 0px 0px 20px 0px;
-    color: #5C5C5C;
-    font-size:x-large;
-}
+
 form.new-item ul{
     list-style:none;
     padding:0;
     margin:0;  
 }
+
 form.new-item li{
     display: block;
     padding: 9px;
@@ -149,11 +69,13 @@ form.new-item li{
     margin-bottom: 30px;
     border-radius: 3px;
 }
+
 form.new-item li:last-child{
     border:none;
     margin-bottom: 0px;
     text-align: center;
 }
+
 form.new-item li > label{
     display: block;
     float: left;
@@ -165,6 +87,7 @@ form.new-item li > label{
     font-size: 14px;
     overflow: hidden;
 }
+
 form.new-item input[type="text"],
 form.new-item input[type="date"],
 form.new-item input[type="datetime"],
@@ -189,6 +112,7 @@ form.new-item select
     font-size: 16px;
     padding: 0;
 }
+
 form.new-item input[type="text"]:focus,
 form.new-item input[type="date"]:focus,
 form.new-item input[type="datetime"]:focus,
@@ -201,7 +125,9 @@ form.new-item input[type="password"]:focus,
 form.new-item textarea:focus,
 form.new-item select:focus
 {
+    box-shadow: 0 0 5px rgba(81, 203, 238, 2);
 }
+
 form.new-item li > span{
     background: #F3F3F3;
     display: block;
@@ -211,9 +137,11 @@ form.new-item li > span{
     color: #C0C0C0;
     font-size: 11px;
 }
+
 form.new-item textarea{
     resize:none;
 }
+
 form.new-item input[type="submit"],
 form.new-item input[type="reset"],
 form.new-item input[type="button"]{
@@ -221,6 +149,7 @@ form.new-item input[type="button"]{
 	border-radius: 5px;
 	padding: 10px;
 }
+
 form.new-item input[type="submit"]:hover,
 form.new-item input[type="reset"]:hover,
 form.new-item input[type="button"]:hover{
