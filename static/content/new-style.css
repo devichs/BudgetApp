@@ -66,6 +66,22 @@ a.amenu:hover{
 	color: white;
 }
 
+.site-header .container,
+.site-footer .container {
+    display: block;
+    padding: 9px;
+    border:1px solid #DDDDDD;
+    margin-bottom: 10px;
+    border-radius: 5px;
+	width: 400px;
+	text-align: center;
+	background-color: #D3D3D3;
+	margin-left: auto;
+	margin-right: auto;
+    font-family: Arial,Verdana,sans-serif;
+	color: #080808;
+    font-size: 100%;
+}
 
 fieldset {
 	width: 500px;

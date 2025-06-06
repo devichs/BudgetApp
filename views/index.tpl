@@ -1,5 +1,5 @@
 %# views/index.tpl
-% rebase('base.tpl', title='Home - What\'s Left!', current_year=current_year, page_specific_css=['index-style.css'])
+% rebase('base.tpl', title='Home - What\'s Left!', load_base_style=True, current_year=current_year, page_specific_css=['index-style.css'])
 
 <nav class="page-navigation">
     <ul>

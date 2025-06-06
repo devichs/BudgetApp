@@ -2,7 +2,7 @@
 
 %# Assuming 'no' is the ID, and 'old_data' is a tuple/list:
 %# (store, category, item, quantity, ui, cost, purchasedate, status_if_exists)
-% rebase('base.tpl', title='Edit Expense ID: ' + str(no), page_specific_css=['edit-receipts-style.css'])
+% rebase('base.tpl', title='Edit Expense ID: ' + str(no), load_base_style=True, page_specific_css=['edit-receipts-style.css'])
 % current_status = old_data[7] if old_data and len(old_data) > 7 else 'open'
 
 <p>Edit the expense with ID = {{no}}</p>

@@ -7,10 +7,13 @@
         <meta name="description" content="{{ locals().get('description', 'Budget Application') }}">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <link rel="stylesheet" href="/static/content/base-style.css"> 
-		% if defined('page_specific_css'):
+		% if load_base_style:
+        <link rel="stylesheet" href="/static/content/base-style.css">
+		% end
+
+		% if defined('page_specific_css') and page_specific_css:
             % for css_file in page_specific_css:
-        <link rel="stylesheet" href="/static/content/{{css_file}}">
+        <link rel="stylesheet" href="/static/content/{{css_file.strip()}}">
             % end
         % end
 

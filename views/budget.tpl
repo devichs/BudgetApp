@@ -1,5 +1,5 @@
 %# views/budget.tpl
-% rebase('base.tpl', title='Budget - What\'s Left!', current_year=current_year, page_specific_css=['budget-style.css'])
+% rebase('base.tpl', title='Budget - What\'s Left!', load_base_style=True, current_year=current_year, page_specific_css=['budget-style.css'])
 
 	<nav class="page-navigation">
 		<ul>
