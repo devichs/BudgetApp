@@ -1,5 +1,5 @@
 %# views/list.tpl
-% rebase('base.tpl', title='Expense List - What\'s Left!', page_specific_css=['list-style.css'])
+% rebase('base.tpl', title='Expense List - What\'s Left!', load_base_style=True, page_specific_css=['list-style.css'])
 
 <div class = "nav"><!--navigation menu-->
 	<ul class = "nav">
@@ -28,10 +28,14 @@
 			<tbody>
 				%for row in rows:
 				<tr>
-					<td>{{row[0]}}</td> <td>{{row[1]}}</td>
-					<td>{{row[2]}}</td> <td>{{row[3]}}</td>
-					<td>{{row[4]}}</td> <td>{{row[5]}}</td>
-					<td>{{row[6]}}</td> <td>{{row[7]}}</td>
+					<td>{{row[0]}}</td> 
+					<td>{{row[1]}}</td>
+					<td>{{row[2]}}</td> 
+					<td>{{row[3]}}</td>
+					<td>{{row[4]}}</td> 
+					<td>{{row[5]}}</td>
+					<td>{{row[6]}}</td> 
+					<td>{{row[7]}}</td>
 					<td>{{row[8]}}</td>
 					<td>
 						<a href="/edit/{{row[0]}}">Edit</a>

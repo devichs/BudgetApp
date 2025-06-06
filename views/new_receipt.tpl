@@ -1,13 +1,9 @@
-<!DOCTYPE html>
-<html>
-	<head>
-		<title>Receipts - Budget</title>
-		<link rel = "stylesheet" href = "static\content\new-budget-style.css">
-		<script src="static\scripts\sorttable.js"></script>
-		<link rel = "stylesheet" href = "static\content\new-style.css">
-		<script src="static\scripts\sorttable.js"></script>
+%# views/new-receipt.tpl
+% rebase('base.tpl', title='New Receipts - What\'s Left!', load_base_style=False,current_year=current_year, page_specific_css=['new-style.css'])
+
+	<head> 
 		<script type="text/javascript">
-		//auto expand textarea
+		<!-- auto expand textarea -->
 		function adjust_textarea(h) {
 			h.style.height = "20px";
 			h.style.height = (h.scrollHeight)+"px";
@@ -17,7 +13,7 @@
 		<body>
 			<ul class = "ulmenu">
 				<li class = "limenu"><a class = "amenu" href = "/budget">Go To Budget</a></li>
-				<li class = "limenu"><a class = "amenu" href = "/list">Expense List</a></li>
+				<li class = "limenu"><a class = "amenu" href = "/list">View Expense List</a></li>
 				<li class = "limenu"><a class = "amenu" href = "/budget">Cancel New Expense</a></li>	
 				<li class = "limenu"><a class = "amenu" href = "http://localhost:5555/">Home</a></li>	
 			</ul>
@@ -234,4 +230,3 @@
 						</form>
 				</fieldset>
 		</body>
-</html>

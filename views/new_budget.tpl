@@ -1,9 +1,13 @@
-<!DOCTYPE html>
-<html>
-	<head>
-		<title>Receipts - Budget</title>
-		<link rel = "stylesheet" href = "static\content\update-budget-style.css">
-		<script src="static\scripts\sorttable.js"></script>
+%# views/index.tpl
+% rebase('base.tpl', title='New Budget - What\'s Left!', load_base_style=False, current_year=current_year, page_specific_css=['update-budget-style.css'])
+	<head> 
+		<script type="text/javascript">
+		<!-- auto expand textarea -->
+		function adjust_textarea(h) {
+			h.style.height = "20px";
+			h.style.height = (h.scrollHeight)+"px";
+		}
+		</script>
 	</head>
 		<body>
 			<ul class = "ulmenu">

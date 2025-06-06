@@ -31,6 +31,21 @@ a.amenu:hover{
 	color: white;
 }
 
+.site-header .container,
+.site-footer .container {
+    text-align: center;
+    font-family: Arial,Verdana,sans-serif;
+	color: #080808;
+    font-size: 120%;
+    text-decoration: none;
+}
+
+a .site-header .container {
+	text-decoration: none;
+	font-size: 120%;
+	color: black;
+}
+
 fieldset {
 	width: 500px;
 	border: 1px solid #dcdcdc;
