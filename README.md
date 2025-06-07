@@ -6,7 +6,7 @@ be possible to compare item costs across different businesses. For example: the 
 
 ## Application
 This is a python web app using bottle and a sqlite db. 
-Current functionality limited to setting a budget, adding purchases to a "receipt" list and, subtracting those receipts from the budget. 
+Current functionality includes hand-typing the contents of a receipt and importing a csv file of transactions from a core account, i.e., checking, credit card. Setting and managing a budget amount. 
 
 ## Page structure: 
 <pre>
@@ -29,25 +29,25 @@ Add Expense
 	--Expense list
 	--Home 
 	--Cancel
+Import Transaction
+	--Import From Account <name>
+	--Account Type (optional) <type>
+	--Select CSV file to import
+	--Import Transactions
+
 </pre>
 
 ## Requirements: 
 1. python 3.9
-2. bottle 3.8 (see bottlepy.org for more details)
+2. bottle 1 or newer (see bottlepy.org for more details)
 
 ## How to run: 
-1. Create the database with manage_receipt_tables.py
-	python .\manage_receipt_tables.py 
-	
-	Builds three tables, "reciepts", "uilookup", and "budget"
-
-2. Run, python .\app.py
+1. Run, python .\app.py
 
 	Defaults to localhost:5555, go to your browser and type that address in. 
 
-3. Manage your receipts and budget 
+3. Manage your receipts and budget and transactions 
 
 ## ToDo: 
-1. Build out Import Expense List.  This would be a .csv or other file type from a finance account to add to your expense list. 
-2. Build out an OCR to text capability to scan receipts and load into the app.
-3. Convert to virtenv.
+1. Build out an OCR to text capability to scan receipts and load into the app.
+2. Add report building and visualization processes.
