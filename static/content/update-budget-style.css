@@ -1,8 +1,3 @@
-body {
-	font-family: Arial,Verdana,sans-serif;
-	color: #080808;
-}
-
 ul.ulmenu {
     list-style:none;
     padding:0;	
@@ -92,19 +87,13 @@ form.update-budget{
     border-radius:2px;
     padding:20px;
 }
-form.update-budget h1{
-    display: block;
-    text-align: center;
-    padding: 0;
-    margin: 0px 0px 20px 0px;
-    color: #5C5C5C;
-    font-size:x-large;
-}
+
 form.update-budget ul{
     list-style:none;
     padding:0;
     margin:0;  
 }
+
 form.update-budget li{
     display: block;
     padding: 9px;
@@ -112,11 +101,13 @@ form.update-budget li{
     margin-bottom: 30px;
     border-radius: 3px;
 }
+
 form.update-budget li:last-child{
     border:none;
     margin-bottom: 0px;
     text-align: center;
 }
+
 form.update-budget li > label{
     display: block;
     float: left;
@@ -128,6 +119,7 @@ form.update-budget li > label{
     font-size: 14px;
     overflow: hidden;
 }
+
 form.update-budget input[type="text"],
 form.update-budget input[type="date"],
 form.update-budget input[type="datetime"],
@@ -152,6 +144,7 @@ form.update-budget select
     font-size: 16px;
     padding: 0;
 }
+
 form.update-budget input[type="text"]:focus,
 form.update-budget input[type="date"]:focus,
 form.update-budget input[type="datetime"]:focus,
@@ -164,7 +157,9 @@ form.update-budget input[type="password"]:focus,
 form.update-budget textarea:focus,
 form.update-budget select:focus
 {
+    box-shadow: 0 0 5px rgba(81, 203, 238, 2);    
 }
+
 form.update-budget li > span{
     background: #F3F3F3;
     display: block;
@@ -174,9 +169,11 @@ form.update-budget li > span{
     color: #C0C0C0;
     font-size: 11px;
 }
+
 form.update-budget textarea{
     resize:none;
 }
+
 form.update-budget input[type="submit"],
 form.update-budget input[type="reset"],
 form.update-budget input[type="button"]{
@@ -184,6 +181,7 @@ form.update-budget input[type="button"]{
 	border-radius: 5px;
 	padding: 10px;
 }
+
 form.update-budget input[type="submit"]:hover,
 form.update-budget input[type="reset"]:hover,
 form.update-budget input[type="button"]:hover{

@@ -1,5 +1,5 @@
 %# views/index.tpl
-% rebase('base.tpl', title='New Budget - What\'s Left!', load_base_style=False, current_year=current_year, page_specific_css=['update-budget-style.css'])
+% rebase('base.tpl', title='New Budget - What\'s Left!', load_base_style=True, current_year=current_year, page_specific_css=['update-budget-style.css'])
 	<head> 
 		<script type="text/javascript">
 		<!-- auto expand textarea -->

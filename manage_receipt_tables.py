@@ -28,7 +28,7 @@ def setup_database():
         # Receipts Table
         c.executescript("""
             CREATE TABLE IF NOT EXISTS receipts(
-                id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, -- Changed to AUTOINCREMENT for typical primary key behavior
+                receipts_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                 store TEXT,
                 category TEXT,
                 item TEXT,
@@ -36,7 +36,8 @@ def setup_database():
                 ui CHAR(2) NOT NULL,
                 cost REAL, -- Changed to REAL for monetary values
                 purchasedate DATE,
-                status TEXT DEFAULT 'open'
+                status TEXT DEFAULT 'open',
+                last_modified_ts DATETIME DEFAULT CURRENT_TIMESTAMP
             );
         """)
         print("Table 'receipts' checked/created.")
@@ -44,9 +45,10 @@ def setup_database():
         # Budget Table
         c.executescript("""
             CREATE TABLE IF NOT EXISTS budget(
-                id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, -- Changed to AUTOINCREMENT
-                amount REAL, -- Changed to REAL
-                budgetdate DATETIME DEFAULT CURRENT_TIMESTAMP
+                budget_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                amount REAL,
+                budgetdate DATETIME DEFAULT CURRENT_TIMESTAMP,
+                last_modified_ts DATETIME DEFAULT CURRENT_TIMESTAMP
             );
         """)
         print("Table 'budget' checked/created.")
@@ -54,9 +56,10 @@ def setup_database():
         # UILOOKUP Table
         c.executescript("""
             CREATE TABLE IF NOT EXISTS uilookup(
-                id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, -- Changed to AUTOINCREMENT
-                ui CHAR(2) NOT NULL UNIQUE, -- Added UNIQUE constraint to ui
-                description TEXT
+                uilookup_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                ui CHAR(2) NOT NULL UNIQUE,
+                description TEXT,
+                last_modified_ts DATETIME DEFAULT CURRENT_TIMESTAMP
             );
         """)
         print("Table 'uilookup' checked/created.")
@@ -64,26 +67,50 @@ def setup_database():
         # Transactions Table
         c.executescript("""
             CREATE TABLE IF NOT EXISTS transactions(
-                id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                transactions_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                 transaction_date TEXT NOT NULL,
                 description TEXT NOT NULL,
                 amount REAL NOT NULL,
-                category_id INTEGER,
+                categories_id INTEGER,
+                core_account_id INTEGER,
                 notes TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP, -- Corrected typo
-                FOREIGN KEY (category_id) REFERENCES categories(id)
+                import_date DATETIME NOT NULL,
+                last_modified_ts DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (categories_id) REFERENCES categories(categories_id),
+                FOREIGN KEY (core_account_id) REFERENCES core_accounts(core_account_id)
             );
         """)
         print("Table 'transactions' checked/created.")
 
+        # trigger to update last_modified_ts on any row update
+        c.executescript("""
+        CREATE TRIGGER IF NOT EXISTS update_transactions_modtime
+        AFTER UPDATE ON transactions FOR EACH ROW 
+        BEGIN
+            update transactions set last_modified_ts = CURRENT_TIMESTAMP where transactions_id = old.transactions_id;
+        END;
+        """ )
+
         # Categories Table
         c.executescript("""
             CREATE TABLE IF NOT EXISTS categories(
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL UNIQUE
+                categories_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL UNIQUE,
+                last_modified_ts DATETIME DEFAULT CURRENT_TIMESTAMP
             );
         """)
         print("Table 'categories' checked/created.")
+
+        # Core Accounts Table
+        c.executescript("""
+            CREATE TABLE IF NOT EXISTS  core_accounts(
+                core_account_id integer primary key autoincrement,
+                core_account_name text not null unique,
+                core_account_type text,
+                last_modified_ts datetime not null default current_timestamp
+            );                    
+        """)
+        print("Table 'core_accounts' checked/created.")
 
         # Populate uilookup table (only if it's empty or using INSERT OR IGNORE)
         # Check if CSV file exists

@@ -1,21 +1,21 @@
 # routes.py
 
-from bottle import route, view, run, template, request, static_file, error, get, post
+from bottle import route, view, run, template, request, static_file, error, get, post, redirect
 from datetime import datetime
 import sqlite3
 import codecs
 import os
 import sys
+import csv
+import io
+from datetime import datetime
 
 # --- Import and call your database setup ---
 import manage_receipt_tables
 manage_receipt_tables.setup_database()
 # -------------------------------------------
 
-# Your existing database name constant can be used or you can refer to
-# manage_receipt_tables.DB_NAME if you make it accessible from there.
-# For simplicity, ensure your routes use the same DB_NAME.
-DB_NAME = "receipts.sqlite" # Or manage_receipt_tables.DB_NAME
+DB_NAME = "receipts.sqlite"
 
 @route('/')
 @route('/home')
@@ -91,7 +91,6 @@ def home():
             return dict(
                 no=receipt_id,
                 old_data=receipt_data,
-
             )
         else:
             return "Receipt not found!"  
@@ -103,9 +102,8 @@ def home():
         item = request.forms.get('item').strip()
         quantity = request.forms.get('quantity').strip()
         ui = request.forms.get('ui').strip()
-        cost = request.forms.get('cost').strip() # Should validate as float
-        purchasedate = request.forms.get('purchasedate').strip() # Should validate as date
-        # status = request.forms.get('status') # If you implement status
+        cost = request.forms.get('cost').strip() 
+        purchasedate = request.forms.get('purchasedate').strip() 
 
         # TODO: Validate data (e.g., cost is a number, date format is correct)
 
@@ -120,9 +118,8 @@ def home():
         c.close()
         conn.close()
 
-        # return f"Receipt {receipt_id} updated. <a href='/list'>Back to list</a>"
-        from bottle import redirect # make sure redirect is imported
-        redirect('/list') # Redirect to the list page after successful update      
+        from bottle import redirect 
+        redirect('/list')     
     
     @route("/newbudget",method = "GET") 
     def new_budget():
@@ -140,139 +137,132 @@ def home():
             return template("new_budget.tpl")
 
     @route('/import_transactions', method='GET')
+    @view('import_transactions_form')
     def show_import_form():
-        return template('import_form') # Assuming your template is named import_form.tpl
+        return dict()
     
+    def get_or_create_categories_id(category_name,db_cursor):
+        category_name = category_name.strip()
+        if not category_name:
+            return None
+        db_cursor.execute("select categories_id from categories where name = ?",(category_name,))
+        row = db_cursor.fetchone()
+        if row:
+            return row[0]
+        else:
+            db_cursor.execute("insert into categories (name) values (?)",(category_name,))
+            return db_cursor.lastrowid
+
+    def get_or_create_core_account_id(account_name,account_type,db_cursor):
+        account_name = account_name.strip()
+        account_type = account_type.strip()
+        if not account_name:
+            return None
+        
+        db_cursor.execute("select core_account_id from core_accounts where core_account_name = ?", (account_name,))
+        row = db_cursor.fetchone()
+        if row:
+            return row[0]
+        else:
+            db_cursor.execute("insert into core_accounts(core_account_name,core_account_type) values(?,?)", (account_name,account_type,))
+            return db_cursor.lastrowid
+
     @route('/import_transactions', method='POST')
-    def process_import():
+    def do_import_transactions():
         upload = request.files.get('csvfile')
-        message = ""
-    
-        if not upload:
-            message = "No file selected."
-            return template('import_form', message=message)
-    
-        if not upload.filename.lower().endswith('.csv'):
-            message = "Please upload a CSV file."
-            return template('import_form', message=message)
-    
+        account_name = request.forms.get('core_account_name')
+        account_type = request.forms.get('core_account_type')
+
+        if not upload or not upload.filename.lower().endswith('.csv'):
+            return template('import_transactions_form', error_message = "Upload must be a valid csv file.")
+        if not account_name or not account_name.strip():
+            return template('import_transactions_form', error_message="The 'Import From Account' name is required.")
+
         try:
             csv_content = upload.file.read().decode('utf-8')
             stream = io.StringIO(csv_content)
-            reader = csv.DictReader(stream) # csv.DictReader is great for named columns!
-    
-            transactions_to_add = []
-            imported_count = 0
-            skipped_count = 0
-            error_messages = []
-    
-            # --- Category Handling: Function to get or create category_id ---
-            def get_or_create_category_id(category_name, db_cursor):
-                category_name = category_name.strip()
-                if not category_name:
-                    return None # Or a default "Uncategorized" ID
-    
-                db_cursor.execute("SELECT id FROM categories WHERE name = ?", (category_name,))
-                row = db_cursor.fetchone()
-                if row:
-                    return row[0]
-                else:
-                    # Category doesn't exist, create it
-                    try:
-                        db_cursor.execute("INSERT INTO categories (name) VALUES (?)", (category_name,))
-                        # conn.commit() # Commit here or once after all categories
-                        return db_cursor.lastrowid
-                    except sqlite3.IntegrityError: # Should be caught by the SELECT first, but good for safety
-                        db_cursor.execute("SELECT id FROM categories WHERE name = ?", (category_name,))
-                        row = db_cursor.fetchone()
-                        return row[0] if row else None
-    
-    
-            # Get a cursor for database operations
-            # Make sure 'conn' is your SQLite connection object
-            c = conn.cursor()
-    
-            for row_number, row_data in enumerate(reader, start=1): # reader is now a DictReader
-                try:
-                    # --- Data Extraction and Cleaning ---
-                    # Headers are: "Date", "Description", "Category", "Amount"
-                    date_str = row_data.get("Date")
-                    description = row_data.get("Description", "").strip() # .strip() to remove leading/trailing whitespace
-                    category_name = row_data.get("Category", "").strip()
-                    amount_str = row_data.get("Amount")
-    
-                    if not all([date_str, description, amount_str]): # Category can be optional
-                        error_messages.append(f"Row {row_number}: Missing essential data (Date, Description, or Amount). Skipping.")
-                        skipped_count += 1
-                        continue
-    
-                    # --- Data Type Conversion & Validation ---
-                    from datetime import datetime
-                    try:
-                        transaction_date = datetime.strptime(date_str.strip(), '%Y-%m-%d').strftime('%Y-%m-%d')
-                    except ValueError:
-                        error_messages.append(f"Row {row_number}: Invalid date format '{date_str}'. Expected YYYY-MM-DD. Skipping.")
-                        skipped_count += 1
-                        continue
-    
-                    try:
-                        amount = float(amount_str.strip())
-                    except ValueError:
-                        error_messages.append(f"Row {row_number}: Invalid amount format '{amount_str}'. Skipping.")
-                        skipped_count += 1
-                        continue
-    
-                    # --- Get Category ID ---
-                    category_id = None
-                    if category_name: # Only process if category_name is present
-                        category_id = get_or_create_category_id(category_name, c)
-                        if category_id is None and category_name: # Failed to get/create valid ID
-                            error_messages.append(f"Row {row_number}: Could not process category '{category_name}'. Assigning no category.")
-                    # If you commit per category in get_or_create_category_id, ensure conn.commit() is called
-    
-                    # --- Prepare for Database Insertion ---
-                    # TODO: Implement Duplicate Checking here if desired
-                    # For example:
-                    # c.execute("SELECT 1 FROM transactions WHERE transaction_date=? AND description=? AND amount=? AND category_id IS ?",
-                    #           (transaction_date, description, amount, category_id)) # Adjust IS ? for category_id if it can be NULL
-                    # if c.fetchone():
-                    #     error_messages.append(f"Row {row_number}: Potential duplicate. Skipping: {date_str}, {description[:30]}, {amount}")
-                    #     skipped_count += 1
-                    #     continue
-    
-                    transactions_to_add.append(
-                        (transaction_date, description, amount, category_id, "Imported") # Assuming 'notes' field exists
-                    )
-    
-                except Exception as e_row:
-                    error_messages.append(f"Row {row_number}: Error processing row '{row_data}'. Error: {e_row}. Skipping.")
+            reader = csv.DictReader(stream)
+        except Exception as e:
+            return template('import_transactions_form', error_message = f"Error reading or decoding file: {e}")
+        
+        import_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+
+        core_account_id = get_or_create_core_account_id(account_name,account_type,c)
+
+        transacations_to_add = []
+        skipped_count = 0
+        imported_count = 0
+        processing_errors = []
+
+        for row_number, row in enumerate(reader, start=2):
+            try:
+                date_str = row.get("Date", "").strip()
+                description = row.get("Description", "").strip()
+                category_name = row.get("Category", "").strip()
+                amount_str = row.get("Amount", "").strip()
+	
+                if not all([date_str, description, amount_str]):
+                    processing_errors.append(f"Row {row_number}: Missing essential data (Date, Description, or Amount).")
                     skipped_count += 1
                     continue
-    
-            # --- Database Insertion ---
-            if transactions_to_add:
-                sql = "INSERT INTO transactions (transaction_date, description, amount, category_id, notes) VALUES (?, ?, ?, ?, ?)"
+	
                 try:
-                    c.executemany(sql, transactions_to_add)
-                    conn.commit() # Commit all transactions at once
-                    imported_count = len(transactions_to_add)
-                    message = f"{imported_count} transactions imported successfully. "
-                except Exception as e_db:
-                    conn.rollback() # Rollback on error
-                    message = f"Database error during bulk insert: {e_db}. No transactions were imported in this batch."
-                    # error_messages will contain per-row processing issues
-            else:
-                message = "No valid transactions found in the file to import. "
-    
-            if skipped_count > 0:
-                message += f"{skipped_count} transactions were skipped. "
-            if error_messages:
-                # You might want to display these errors more nicely in your template
-                message += "Details: " + " | ".join(error_messages[:5]) # Show first 5 errors for brevity
-    
-        except Exception as e_file:
-            message = f"An error occurred reading or processing the file: {e_file}"
-            import traceback
-            traceback.print_exc() # For server-side logging
-    
-        return template('import_form', message=message) # Pass message back to the form
+                    datetime.strptime(date_str, '%Y-%m-%d')
+                    transaction_date = date_str
+                except ValueError:
+                    processing_errors.append(f"Row {row_number}: Invalid date format '{date_str}'. Expected YYYY-MM-DD.")
+                    skipped_count  += 1
+                    continue
+
+                try:
+                    amount = float(amount_str)
+                except ValueError:
+                    processing_errors.append(f"Row {row_number}: Invalid amouint format '{amount_str}'.")
+                    skipped_count += 1
+                    continue
+
+                categories_id = get_or_create_categories_id(category_name,c)
+
+                c.execute("select 1 from transactions where transaction_date = ? and description = ? and amount = ?", (transaction_date,description,amount))
+                if c.fetchone():
+                    skipped_count += 1
+                    continue
+
+                transacations_to_add.append({
+                    "date": transaction_date,
+                    "description": description,
+                    "amount": amount,
+                    "categories_id": categories_id, 
+                    "core_account_id": core_account_id,
+                    "notes": "Imported",
+                    "import_date": import_timestamp
+                })
+                imported_count += 1
+
+            except Exception as e:
+                processing_errors.append(f"Row {row_number}: Unexpected error - {e}")
+                skipped_count += 1 
+                continue
+
+        if transacations_to_add:
+            sql = "insert into transactions (transaction_date,description,amount,categories_id,core_account_id,notes,import_date) values (?,?,?,?,?,?,?)"
+            insert_data = [(tx['date'],tx['description'],tx['amount'],tx['categories_id'],tx['core_account_id'],tx['notes'],tx['import_date']) for tx in transacations_to_add]
+            c.executemany(sql,insert_data)
+            imported_count = len(transacations_to_add)
+
+        conn.commit()
+        conn.close()
+
+        final_message = f"File import complete! Successfully imported {imported_count} new transactions."
+        if skipped_count > 0:
+            final_message += f" Skipped {skipped_count} existing or invalid rows."
+        if processing_errors:
+            final_message += f" Errors encountered: {'; '.join(processing_errors[:3])}"
+
+        return template('import_transactions_form', message = final_message)
+            
+
+        
