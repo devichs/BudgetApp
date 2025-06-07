@@ -153,13 +153,31 @@ def home():
             db_cursor.execute("insert into categories (name) values (?)",(category_name,))
             return db_cursor.lastrowid
 
+    def get_or_create_core_account_id(account_name,account_type,db_cursor):
+        account_name = account_name.strip()
+        account_type = account_type.strip()
+        if not account_name:
+            return None
+        
+        db_cursor.execute("select core_account_id from core_accounts where core_account_name = ?", (account_name,))
+        row = db_cursor.fetchone()
+        if row:
+            return row[0]
+        else:
+            db_cursor.execute("insert into core_accounts(core_account_name,core_account_type) values(?,?)", (account_name,account_type,))
+            return db_cursor.lastrowid
+
     @route('/import_transactions', method='POST')
     def do_import_transactions():
         upload = request.files.get('csvfile')
+        account_name = request.forms.get('core_account_name')
+        account_type = request.forms.get('core_account_type')
 
         if not upload or not upload.filename.lower().endswith('.csv'):
             return template('import_transactions_form', error_message = "Upload must be a valid csv file.")
-        
+        if not account_name or not account_name.strip():
+            return template('import_transactions_form', error_message="The 'Import From Account' name is required.")
+
         try:
             csv_content = upload.file.read().decode('utf-8')
             stream = io.StringIO(csv_content)
@@ -171,6 +189,8 @@ def home():
 
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
+
+        core_account_id = get_or_create_core_account_id(account_name,account_type,c)
 
         transacations_to_add = []
         skipped_count = 0
@@ -216,6 +236,7 @@ def home():
                     "description": description,
                     "amount": amount,
                     "categories_id": categories_id, 
+                    "core_account_id": core_account_id,
                     "notes": "Imported",
                     "import_date": import_timestamp
                 })
@@ -227,8 +248,8 @@ def home():
                 continue
 
         if transacations_to_add:
-            sql = "insert into transactions (transaction_date,description,amount,categories_id,notes,import_date) values (?,?,?,?,?,?)"
-            insert_data = [(tx['date'],tx['description'],tx['amount'],tx['categories_id'],tx['notes'],tx['import_date']) for tx in transacations_to_add]
+            sql = "insert into transactions (transaction_date,description,amount,categories_id,core_account_id,notes,import_date) values (?,?,?,?,?,?,?)"
+            insert_data = [(tx['date'],tx['description'],tx['amount'],tx['categories_id'],tx['core_account_id'],tx['notes'],tx['import_date']) for tx in transacations_to_add]
             c.executemany(sql,insert_data)
             imported_count = len(transacations_to_add)
 

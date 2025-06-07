@@ -12,6 +12,16 @@
 
 <form action="/import_transactions" method="post" enctype="multipart/form-data">
     <div>
+        <label for="core_account_name">Import From Account:</label>
+        <input type="text" id="core_account_name" name="core_account_name" placeholder="e.g., Amex Gold Card" required>
+    </div>
+    <br>
+    <div>
+        <label for="core_account_type">Account Type (Optional):</label>
+        <input type="text" id="core_account_type" name="core_account_type" placeholder="e.g., Credit Card, Checking">     
+    </div>
+    <br>
+    <div>
         <label for="csvfile">Select CSV file to import:</label>
         <p style="font-size: smaller; color: #555;">File must have columns: "Date", "Description", "Category", "Amount"</p>
         <input type="file" id="csvfile" name="csvfile" accept=".csv" required>

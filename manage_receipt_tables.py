@@ -72,10 +72,12 @@ def setup_database():
                 description TEXT NOT NULL,
                 amount REAL NOT NULL,
                 categories_id INTEGER,
+                core_account_id INTEGER,
                 notes TEXT,
                 import_date DATETIME NOT NULL,
                 last_modified_ts DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (categories_id) REFERENCES categories(categories_id)
+                FOREIGN KEY (categories_id) REFERENCES categories(categories_id),
+                FOREIGN KEY (core_account_id) REFERENCES core_accounts(core_account_id)
             );
         """)
         print("Table 'transactions' checked/created.")
@@ -98,6 +100,17 @@ def setup_database():
             );
         """)
         print("Table 'categories' checked/created.")
+
+        # Core Accounts Table
+        c.executescript("""
+            CREATE TABLE IF NOT EXISTS  core_accounts(
+                core_account_id integer primary key autoincrement,
+                core_account_name text not null unique,
+                core_account_type text,
+                last_modified_ts datetime not null default current_timestamp
+            );                    
+        """)
+        print("Table 'core_accounts' checked/created.")
 
         # Populate uilookup table (only if it's empty or using INSERT OR IGNORE)
         # Check if CSV file exists
