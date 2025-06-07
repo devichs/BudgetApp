@@ -167,6 +167,8 @@ def home():
         except Exception as e:
             return template('import_transactions_form', error_message = f"Error reading or decoding file: {e}")
         
+        import_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
 
@@ -214,7 +216,8 @@ def home():
                     "description": description,
                     "amount": amount,
                     "categories_id": categories_id, 
-                    "notes": "Imported"
+                    "notes": "Imported",
+                    "import_date": import_timestamp
                 })
                 imported_count += 1
 
@@ -224,8 +227,8 @@ def home():
                 continue
 
         if transacations_to_add:
-            sql = "insert into transactions (transaction_date,description,amount,categories_id,notes) values (?,?,?,?,?)"
-            insert_data = [(tx['date'],tx['description'],tx['amount'],tx['categories_id'],tx['notes']) for tx in transacations_to_add]
+            sql = "insert into transactions (transaction_date,description,amount,categories_id,notes,import_date) values (?,?,?,?,?,?)"
+            insert_data = [(tx['date'],tx['description'],tx['amount'],tx['categories_id'],tx['notes'],tx['import_date']) for tx in transacations_to_add]
             c.executemany(sql,insert_data)
             imported_count = len(transacations_to_add)
 

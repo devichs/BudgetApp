@@ -73,12 +73,21 @@ def setup_database():
                 amount REAL NOT NULL,
                 categories_id INTEGER,
                 notes TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                last_modified_ts DATETIME DEFAULT CURRENT_TIMESTAMP,
+                import_date DATETIME NOT NULL,
+                last_modified_ts DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (categories_id) REFERENCES categories(categories_id)
             );
         """)
         print("Table 'transactions' checked/created.")
+
+        # trigger to update last_modified_ts on any row update
+        c.executescript("""
+        CREATE TRIGGER IF NOT EXISTS update_transactions_modtime
+        AFTER UPDATE ON transactions FOR EACH ROW 
+        BEGIN
+            update transactions set last_modified_ts = CURRENT_TIMESTAMP where transactions_id = old.transactions_id;
+        END;
+        """ )
 
         # Categories Table
         c.executescript("""
