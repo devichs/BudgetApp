@@ -51,3 +51,4 @@ Import Transaction
 ## ToDo: 
 1. Build out an OCR to text capability to scan receipts and load into the app.
 2. Add report building and visualization processes.
+3. AI to generate expense categories on the fly and per transaction.
