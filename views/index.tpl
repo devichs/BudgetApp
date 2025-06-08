@@ -7,6 +7,7 @@
         <li><a href="/newbudget">Update Budget</a></li>
         <li><a href="/list">View Expense List</a></li>
         <li><a href="/new">Add New Expense</a></li>
-        <li><a href="/import_transactions">Import Transactions from CSV</a></li>
+        <li><a href="/transactions">View Transactions</a></li>
+        <li><a href="/import_transactions">Import Transactions</a></li>
     </ul>
 </nav>

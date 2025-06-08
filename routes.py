@@ -9,6 +9,7 @@ import sys
 import csv
 import io
 from datetime import datetime
+import math
 
 # --- Import and call your database setup ---
 import manage_receipt_tables
@@ -141,6 +142,8 @@ def home():
     def show_import_form():
         return dict()
     
+    # begin csv file import process
+
     def get_or_create_categories_id(category_name,db_cursor):
         category_name = category_name.strip()
         if not category_name:
@@ -258,7 +261,8 @@ def home():
                     continue
 
                 try:
-                    amount = float(amount_str)
+                    cleaned_amount_str = amount_str.replace(',','')
+                    amount = float(cleaned_amount_str)
                 except ValueError:
                     processing_errors.append(f"Row {row_number}: Invalid amount format '{amount_str}'.")
                     skipped_count += 1
@@ -304,5 +308,84 @@ def home():
 
         return template('import_transactions_form', message = final_message)
             
+    # end csv file import process
 
+    # begin pagination/search of viewing transactions
+
+    @route('/transactions')
+    @view('transactions_list')
+    def view_transactions():
+        description_filter = request.query.get('description','').strip()
+        core_account_id_filter = request.query.get('core_account_id','').strip()
+        start_date_filter = request.query.get('start_date','').strip()
+        end_date_filter = request.query.get('end_date','').strip()
+
+        page = int(request.query.get('page',1))
+        per_page = 50
+
+        where_clauses = []
+        params = []
+
+        if description_filter:
+            where_clauses.append("t.description like ?")
+            params.append(f"{description_filter}%")
+        if core_account_id_filter:
+            where_clauses.append("t.core_account_id = ?")
+            params.append(core_account_id_filter)
+        if start_date_filter:
+            where_clauses.append("t.transaction_date >= ?")
+            params.append(start_date_filter)
+        if end_date_filter:
+            where_clauses.append("t.transaction_date <= ?")
+            params.append(end_date_filter)
+
+        where_sql = " and ".join(where_clauses) if where_clauses else "1=1"
+
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+
+        count_sql = f"select count(*) from transactions t where {where_sql}"
+        c.execute(count_sql,params)
+        total_records = c.fetchone()[0]
+        total_pages = math.ceil(total_records / per_page)
+
+        offset = (page -1) * per_page
+
+        main_sql = f"""
+            select t.transactions_id
+                  ,t.transaction_date
+                  ,t.description
+                  ,t.amount
+                  ,cat.name as category_name
+                  ,ca.core_account_name
+                  ,t.import_date
+                  ,t.last_modified_ts
+            from transactions t
+            left join categories cat on t.categories_id = cat.categories_id
+            left join core_accounts ca on t.core_account_id = ca.core_account_id
+            where {where_sql}
+            order by t.transaction_date desc, t.transactions_id desc
+            limit ? offset ?
+            """
         
+        final_params = params + [per_page,offset]
+        c.execute(main_sql,final_params)
+        transactions_for_page = c.fetchall()
+
+        c.execute("select core_account_id,core_account_name from core_accounts order by core_account_name")
+        all_accounts = c.fetchall()
+
+        conn.close()
+
+        return dict(
+            transactions = transactions_for_page,
+            current_page = page,
+            total_pages = total_pages,
+            description_filter = description_filter,
+            core_account_id_filter = core_account_id_filter,
+            start_date_filter = start_date_filter,
+            end_date_filter = end_date_filter,
+            all_accounts = all_accounts,
+            title = "View Transactions"
+        )
+    
