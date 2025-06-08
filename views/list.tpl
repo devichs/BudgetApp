@@ -5,7 +5,7 @@
 	<ul class = "nav">
 		<li><a href = "/new">Add New Expense</a></li>
 		<li><a href = "/budget">Go To Budget</a></li>
-		<li><a href = "/list">Import Expense List</a></li>
+		<li><a href = "/import_transactions">Import Transactions</a></li>
 		<li><a href = "http://localhost:5555/">Home</a></li>		
 	</ul>
 </div><!--end navigation menu-->

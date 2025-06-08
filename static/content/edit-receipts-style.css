@@ -1,49 +1,9 @@
-body {
-	font-family: Arial,Verdana,sans-serif;
-	color: #080808;
-}
-
-table.budget{
-	width: 900px;
-}
-
-table.centered{
-	margin-left: auto;
-	margin-right: auto;
-	width: 1200px;
-}
-
-th,td {
-	padding: 7px 10px 10px 10px;
-}
-
-th {
-	text-transform: uppercase;
-	letter-spacing: 0.1em;
-	font-size: 90%;
-	border-bottom: 2px solid #111111;
-	border-top: 1px solid #999;
-	text-align: left;
-}
-
-tr.even {
-	bacground-color: #efefef;
-}
-
-tr:hover {
-	background-color: #c3e6e5;
-}
-
-.money {
-	text-align: right;
-}
-
-ul.ulmenu {
+ul.ulmainmenu {
     list-style:none;
     padding:0;	
 }
 
-li.limenu {
+li.limainmenu {
     display: block;
     padding: 9px;
     border:1px solid #DDDDDD;
@@ -65,7 +25,6 @@ a.amenu {
 a.amenu:hover{
 	color: white;
 }
-
 
 fieldset {
 	width: 500px;
@@ -89,56 +48,28 @@ legend {
 	margin-right: auto;
 }
 
-ul {
-    list-style:none;
-    padding:0;
-    margin:0;  
-}
-li {
-    display: block;
-    padding: 9px;
-    border:1px solid #DDDDDD;
-    margin-bottom: 10px;
-    border-radius: 3px;
-}
-
-a {
-	text-decoration: none;
-}
-
-form.new-item{
+form.edit-receipt{
     max-width:400px;
     margin:50px auto;
     background:#fff;
     border-radius:2px;
     padding:20px;
 }
-form.new-item h1{
-    display: block;
-    text-align: center;
-    padding: 0;
-    margin: 0px 0px 20px 0px;
-    color: #5C5C5C;
-    font-size:x-large;
-}
-form.new-item ul{
+
+form.edit-receipt ul{
     list-style:none;
     padding:0;
     margin:0;  
 }
-form.new-item li{
+form.edit-receipt li{
     display: block;
     padding: 9px;
     border:1px solid #DDDDDD;
     margin-bottom: 30px;
     border-radius: 3px;
 }
-form.new-item li:last-child{
-    border:none;
-    margin-bottom: 0px;
-    text-align: center;
-}
-form.new-item li > label{
+
+form.edit-receipt li > label{
     display: block;
     float: left;
     margin-top: -19px;
@@ -149,17 +80,17 @@ form.new-item li > label{
     font-size: 14px;
     overflow: hidden;
 }
-form.new-item input[type="text"],
-form.new-item input[type="date"],
-form.new-item input[type="datetime"],
-form.new-item input[type="email"],
-form.new-item input[type="number"],
-form.new-item input[type="search"],
-form.new-item input[type="time"],
-form.new-item input[type="url"],
-form.new-item input[type="password"],
-form.new-item textarea,
-form.new-item select
+form.edit-receipt input[type="text"],
+form.edit-receipt input[type="date"],
+form.edit-receipt input[type="datetime"],
+form.edit-receipt input[type="email"],
+form.edit-receipt input[type="number"],
+form.edit-receipt input[type="search"],
+form.edit-receipt input[type="time"],
+form.edit-receipt input[type="url"],
+form.edit-receipt input[type="password"],
+form.edit-receipt textarea,
+form.edit-receipt select
 {
     box-sizing: border-box;
     -webkit-box-sizing: border-box;
@@ -173,20 +104,21 @@ form.new-item select
     font-size: 16px;
     padding: 0;
 }
-form.new-item input[type="text"]:focus,
-form.new-item input[type="date"]:focus,
-form.new-item input[type="datetime"]:focus,
-form.new-item input[type="email"]:focus,
-form.new-item input[type="number"]:focus,
-form.new-item input[type="search"]:focus,
-form.new-item input[type="time"]:focus,
-form.new-item input[type="url"]:focus,
-form.new-item input[type="password"]:focus,
-form.new-item textarea:focus,
-form.new-item select:focus
+form.edit-receipt input[type="text"]:focus,
+form.edit-receipt input[type="date"]:focus,
+form.edit-receipt input[type="datetime"]:focus,
+form.edit-receipt input[type="email"]:focus,
+form.edit-receipt input[type="number"]:focus,
+form.edit-receipt input[type="search"]:focus,
+form.edit-receipt input[type="time"]:focus,
+form.edit-receipt input[type="url"]:focus,
+form.edit-receipt input[type="password"]:focus,
+form.edit-receipt textarea:focus,
+form.edit-receipt select:focus
 {
+    box-shadow: 0 0 5px rgba(81, 203, 238, 2);
 }
-form.new-item li > span{
+form.edit-receipt li > span{
     background: #F3F3F3;
     display: block;
     padding: 3px;
@@ -195,19 +127,19 @@ form.new-item li > span{
     color: #C0C0C0;
     font-size: 11px;
 }
-form.new-item textarea{
+form.edit-receipt textarea{
     resize:none;
 }
-form.new-item input[type="submit"],
-form.new-item input[type="reset"],
-form.new-item input[type="button"]{
+form.edit-receipt input[type="submit"],
+form.edit-receipt input[type="reset"],
+form.edit-receipt input[type="button"]{
 	border: 1px solid #dcdcdc;
 	border-radius: 5px;
 	padding: 10px;
 }
-form.new-item input[type="submit"]:hover,
-form.new-item input[type="reset"]:hover,
-form.new-item input[type="button"]:hover{
+form.edit-receipt input[type="submit"]:hover,
+form.edit-receipt input[type="reset"]:hover,
+form.edit-receipt input[type="button"]:hover{
     background: #efefef;
 }
 
