@@ -28,7 +28,7 @@ def home():
         con = sqlite3.connect("receipts.sqlite")
         c = con.cursor()
         c.execute(""" 
-        select id,store,category,item,quantity,ui,'$' || cast(cost as float) as cost,purchasedate,status from receipts
+        select receipts_id,store,category,item,quantity,ui,'$' || cast(cost as float) as cost,purchasedate,status from receipts
         """)
 
         result = c.fetchall()
@@ -43,10 +43,10 @@ def home():
         select distinct '$' || cast(amount as float) as 'amount', date(budgetdate) as 'DateSet','$' || r.cost as 'ExpensesTotal','$' || cast((x.budget - r.cost) as float) as 'WhatsLleft'
             from budget b,
             (select sum(cost)cost from receipts where purchasedate >= (select max(date(budgetdate)) from budget))r,
-        (select distinct amount as budget,id  from budget where id in (
-        select max(id) from budget))x
-        where b.id in (
-        select max(id) from budget) 
+        (select distinct amount as budget,budget_id  from budget where budget_id in (
+        select max(budget_id) from budget))x
+        where b.budget_id in (
+        select max(budget_id) from budget) 
         order by b.budgetdate desc	
         """)
 
@@ -82,7 +82,7 @@ def home():
     def show_edit_receipt_form(receipt_id):
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
-        c.execute("SELECT store, category, item, quantity, ui, cost, purchasedate,status FROM receipts WHERE id = ?", (receipt_id,))
+        c.execute("SELECT store, category, item, quantity, ui, cost, purchasedate,status FROM receipts WHERE receipts_id = ?", (receipt_id,))
         receipt_data = c.fetchone()
         c.close()
         conn.close()
@@ -112,7 +112,7 @@ def home():
         c.execute("""
             UPDATE receipts 
             SET store = ?, category = ?, item = ?, quantity = ?, ui = ?, cost = ?, purchasedate = ?
-            WHERE id = ?
+            WHERE receipts_id = ?
         """, (store, category, item, quantity, ui, float(cost), purchasedate, receipt_id)) # Add status if implemented
         conn.commit()
         c.close()
@@ -192,6 +192,8 @@ def home():
 
         core_account_id = get_or_create_core_account_id(account_name,account_type,c)
 
+        batch_category_cache = {}
+
         transacations_to_add = []
         skipped_count = 0
         imported_count = 0
@@ -208,7 +210,45 @@ def home():
                     processing_errors.append(f"Row {row_number}: Missing essential data (Date, Description, or Amount).")
                     skipped_count += 1
                     continue
-	
+
+                # add intelligent guess for null category during import
+                if not category_name:
+                    guessed_category = None
+
+                    search_keyword = description.split(' ')[0]
+
+                    if category_name and search_keyword:
+                        batch_category_cache[search_keyword] = category_name
+
+                    if not category_name and search_keyword:
+                        guessed_category = None
+
+                    if search_keyword in batch_category_cache:
+                        guessed_category = batch_category_cache[search_keyword]
+                        print(f"Row {row_number}: Guessed category '{guessed_category}' for '{description}' from this batch.")
+                    else:
+                        c.execute("""
+                                  select cat.name
+                                  from transactions t
+                                  join categories cat on t.categories_id = cat.categories_id
+                                  where t.description like ? and t.categories_id is not null
+                                  order by t.import_date desc
+                                  limit 1
+                                  """, ('%' + search_keyword + '%',))
+                        
+                        result = c.fetchone()
+                        if result:
+                            guessed_category = result[0]
+                            print(f"Row {row_number}: Guessed category '{guessed_category}' for description '{description}'")
+
+                    if guessed_category:
+                            category_name = guessed_category
+                    else:
+                        category_name = description
+                        print(f"Row {row_number}: No similar category found for '{description}'. Creating new category.")
+
+                        # end category guessing  
+
                 try:
                     datetime.strptime(date_str, '%Y-%m-%d')
                     transaction_date = date_str
@@ -220,7 +260,7 @@ def home():
                 try:
                     amount = float(amount_str)
                 except ValueError:
-                    processing_errors.append(f"Row {row_number}: Invalid amouint format '{amount_str}'.")
+                    processing_errors.append(f"Row {row_number}: Invalid amount format '{amount_str}'.")
                     skipped_count += 1
                     continue
 
