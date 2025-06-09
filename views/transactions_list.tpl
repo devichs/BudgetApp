@@ -1,51 +1,48 @@
 %# views/transactions_list.tpl
-% rebase('base.tpl', title=title, load_base_style=True)
+% rebase('base.tpl', title=title, load_base_style=True, page_specific_css=['transactions-list-style.css'])
 
-<h2>All Transactions</h2>
+<ul class = "ulmainmenu">
+	<li class = "limainmenu"><a class = "amenu" href = "/budget">Go To Budget</a></li>
+	<li class = "limainmenu"><a class = "amenu" href = "/list">View Expense List</a></li>
+	<li class = "limainmenu"><a class = "amenu" href = "/list">Cancel Edit Expense</a></li>	
+	<li class = "limainmenu"><a class = "amenu" href = "http://localhost:5555/">Home</a></li>	
+</ul>
 
-<form action="/transactions" method="get" class="filter-form">
-    <div class="form-row">
-        <div class="form-group">
+<fieldset>
+    <legend>All Transactions</legend>
+
+<form class = "transactions-list" action="/transactions" method="get" class="filter-form">
+    <p>Search Criteria</p>
+    <ul>
+        <li>
             <label for="description">Description contains:</label>
             <input type="text" id="description" name="description" value="{{ description_filter or '' }}">
-        </div>
-        <div class="form-group">
-            <label for="account">Account:</label>
+        </li>
+        <li>
+            <label for="account">Core Account:</label>
             <select id="account" name="core_account_id">
-                <option value="">-- All Accounts --</option>
+                <option value="">-- All Core Accounts --</option>
                 % for acc in all_accounts:
                     %# Pre-select the currently filtered account
                     <option value="{{acc[0]}}" {{'selected' if str(acc[0]) == core_account_id_filter else ''}}>{{acc[1]}}</option>
                 % end
             </select>
-        </div>
-    </div>
-    <div class="form-row">
-        <div class="form-group">
-            <label for="start_date">From Date:</label>
+        </li>
+        <li>
+            <label for="start_date">Transaction From Date:</label>
             <input type="date" id="start_date" name="start_date" value="{{ start_date_filter or '' }}">
-        </div>
-        <div class="form-group">
-            <label for="end_date">To Date:</label>
+        </li>
+        <li>
+            <label for="end_date">Transaction To Date:</label>
             <input type="date" id="end_date" name="end_date" value="{{ end_date_filter or '' }}">
-        </div>
-    </div>
-    <div class="form-row">
-        <button type="submit">Search</button>
-        <a href="/transactions">Clear Filters</a>
-    </div>
+        </li>
+        <input type="submit" value="Search"</>
+        <input type="reset" name="reset" value="Reset"/>
+    </li>
 </form>
-
-<style>
-/* Simple styling for the form */
-.filter-form { background-color: #f7f7f7; border: 1px solid #ddd; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
-.filter-form .form-row { display: flex; gap: 20px; margin-bottom: 10px; }
-.filter-form .form-group { flex: 1; }
-.filter-form label { display: block; margin-bottom: 5px; font-size: 14px; }
-.filter-form input, .filter-form select, .filter-form button { width: 100%; padding: 8px; box-sizing: border-box; }
-</style>
-
-<table class="sortable">
+</fieldset>
+<table class="sortable centered">
+<caption>Current list of transactions</caption>
     <thead>
         <tr>
             <th>Date</th>
@@ -69,43 +66,36 @@
 
 %# ... your </table> for transactions ...
 
-<div class="pagination">
+        <ul class="ulpagination">
     
-    %# --- NEW ROBUST CODE ---
-    %# Build a query string that includes only the active filters
-    % params = []
-    % if description_filter:
-    %   params.append('description=' + description_filter)
-    % end
-    % if core_account_id_filter:
-    %   params.append('core_account_id=' + core_account_id_filter)
-    % end
-    % if start_date_filter:
-    %   params.append('start_date=' + start_date_filter)
-    % end
-    % if end_date_filter:
-    %   params.append('end_date=' + end_date_filter)
-    % end
-    % query_params = '&'.join(params)
-    %# --- END OF NEW CODE ---
+            %# Build a query string that includes only the active filters
+            % params = []
+            % if description_filter:
+            %   params.append('description=' + description_filter)
+            % end
+            % if core_account_id_filter:
+            %   params.append('core_account_id=' + core_account_id_filter)
+            % end
+            % if start_date_filter:
+            %   params.append('start_date=' + start_date_filter)
+            % end
+            % if end_date_filter:
+            %   params.append('end_date=' + end_date_filter)
+            % end
+            % query_params = '&'.join(params)
 
-    Page {{current_page}} of {{total_pages}}
-    <br><br>
+                <li class="pages">
+                    Page {{current_page}} of {{total_pages}}
+                </li>
+                <li class="navigationinstructions">
+                    % if current_page > 1:
+                        <a class="first" href="/transactions?page=1&{{query_params}}">&laquo; First</a>
+                        <a class="previous" href="/transactions?page={{current_page - 1}}&{{query_params}}">&lsaquo; Previous</a>
+                    % end
 
-    % if current_page > 1:
-        <a href="/transactions?page=1&{{query_params}}">&laquo; First</a>
-        <a href="/transactions?page={{current_page - 1}}&{{query_params}}">&lsaquo; Previous</a>
-    % end
-
-    % if current_page < total_pages:
-        <a href="/transactions?page={{current_page + 1}}&{{query_params}}">Next &rsaquo;</a>
-        <a href="/transactions?page={{total_pages}}&{{query_params}}">Last &raquo;</a>
-    % end
-</div>
-
-<style>
-/* Simple styling for pagination links */
-.pagination { margin-top: 20px; text-align: center; }
-.pagination a { padding: 5px 10px; border: 1px solid #ddd; text-decoration: none; color: #080808; }
-.pagination a:hover { background-color: #efefef; }
-</style>
+                    % if current_page < total_pages:
+                        <a class="next" href="/transactions?page={{current_page + 1}}&{{query_params}}">Next &rsaquo;</a>
+                        <a class="last" href="/transactions?page={{total_pages}}&{{query_params}}">Last &raquo;</a>
+                    % end
+                </li>
+        </ul>

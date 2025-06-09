@@ -1,0 +1,222 @@
+caption {
+	background-color: #efefef;
+	border: 1px solid #dcdcdc;
+	border-radius: 5px;
+	padding: 10px 20px;
+	text-align: center;
+	text-transform: uppercase;
+	font-size: 120%;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+table.sortable{
+	width: 900px;
+}
+
+table.centered{
+	margin-left: auto;
+	margin-right: auto;
+	width: 1200px;
+}
+
+th,td {
+	padding: 7px 10px 10px 10px;
+}
+
+th {
+	text-transform: uppercase;
+	letter-spacing: 0.1em;
+	font-size: 90%;
+	border-bottom: 2px solid #111111;
+	border-top: 1px solid #999;
+	text-align: left;
+}
+
+tr.even {
+	background-color: #efefef;
+}
+
+tr:hover {
+	background-color: #c3e6e5;
+}
+
+ul.ulmainmenu {
+    list-style:none;
+    padding:0;	
+}
+
+li.limainmenu {
+    display: block;
+    padding: 9px;
+    border:1px solid #DDDDDD;
+    margin-bottom: 10px;
+    border-radius: 5px;
+	width: 200px;
+	text-align: center;
+	background-color: #D3D3D3;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+a.amenu {
+	text-decoration: none;
+	font-size: 120%;
+	color: black;
+}
+
+a.amenu:hover{
+	color: white;
+}
+
+fieldset {
+	width: 500px;
+	border: 1px solid #dcdcdc;
+	border-radius: 5px;
+	padding: 5px;
+	text-align: right;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+legend {
+	background-color: #efefef;
+	border: 1px solid #dcdcdc;
+	border-radius: 5px;
+	padding: 10px 20px;
+	text-align: left;
+	text-transform: uppercase;
+	font-size: 120%;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+form.transactions-list{
+    max-width:400px;
+    margin:50px auto;
+    background:#fff;
+    border-radius:2px;
+    padding:20px;
+}
+
+form.transactions-list ul{
+    list-style:none;
+    padding:0;
+    margin:0;  
+}
+form.transactions-list li{
+    display: block;
+    padding: 9px;
+    border:1px solid #DDDDDD;
+    margin-bottom: 30px;
+    border-radius: 3px;
+}
+
+form.transactions-list li > label{
+    display: block;
+    float: left;
+    margin-top: -19px;
+    background: #FFFFFF;
+    height: 14px;
+    padding: 2px 5px 2px 5px;
+    color: #B9B9B9;
+    font-size: 14px;
+    overflow: hidden;
+}
+
+form.transactions-list p{
+    font-size: 12px;
+    text-align: left;
+    color: #080808;
+}
+
+form.transactions-list input[type="text"],
+form.transactions-list input[type="date"],
+form.transactions-list input[type="datetime"],
+form.transactions-list input[type="email"],
+form.transactions-list input[type="number"],
+form.transactions-list input[type="search"],
+form.transactions-list input[type="time"],
+form.transactions-list input[type="url"],
+form.transactions-list input[type="password"],
+form.transactions-list textarea,
+form.transactions-list select
+{
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    width: 100%;
+    display: block;
+    outline: none;
+    border: none;
+    height: 25px;
+    line-height: 25px;
+    font-size: 16px;
+    padding: 0;
+}
+form.transactions-list input[type="text"]:focus,
+form.transactions-list input[type="date"]:focus,
+form.transactions-list input[type="datetime"]:focus,
+form.transactions-list input[type="email"]:focus,
+form.transactions-list input[type="number"]:focus,
+form.transactions-list input[type="search"]:focus,
+form.transactions-list input[type="time"]:focus,
+form.transactions-list input[type="url"]:focus,
+form.transactions-list input[type="password"]:focus,
+form.transactions-list textarea:focus,
+form.transactions-list select:focus
+{
+    box-shadow: 0 0 5px rgba(81, 203, 238, 2);
+}
+form.transactions-list li > span{
+    background: #F3F3F3;
+    display: block;
+    padding: 3px;
+    margin: 0 -9px -9px -9px;
+    text-align: center;
+    color: #C0C0C0;
+    font-size: 11px;
+}
+form.transactions-list textarea{
+    resize:none;
+}
+form.transactions-list input[type="submit"],
+form.transactions-list input[type="reset"],
+form.transactions-list input[type="button"]{
+	border: 1px solid #dcdcdc;
+	border-radius: 5px;
+	padding: 10px;
+}
+form.transactions-list input[type="submit"]:hover,
+form.transactions-list input[type="reset"]:hover,
+form.transactions-list input[type="button"]:hover{
+    background: #efefef;
+}
+
+ul.ulpagination{
+    display: table;
+    margin: auto;
+    text-align: center;
+}
+
+li.pages{
+   	width: 100px;
+    border: 1px solid #dcdcdc;
+	border-radius: 1px;
+	padding: 10px;
+	margin-left: auto;
+	margin-right: auto; 
+
+}
+
+li.navigationinstructions{
+    width: 400px;
+    border: 1px solid #dcdcdc;
+	border-radius: 1px;
+	padding: 10px;
+	margin-left: auto;
+	margin-right: auto; 
+}
+
+
+
