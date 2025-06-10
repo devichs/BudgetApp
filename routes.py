@@ -471,17 +471,7 @@ def home():
             print("--- EXTRACTED DATA ---")
             print(extracted_data)
 
-            result_html = f"""
-                <h2>Extracted Details (For Debugging)</h2>
-                <p><strong>Store:</strong> {extracted_data.get('store_name')}</p>
-                <p><strong>Date:</strong> {extracted_data.get('purchase_date')}</p>
-                <p><strong>Total:</strong> {extracted_data.get('total_amount')}</p>
-                <hr>
-                <h3>Raw Text:</h3>
-                <pre>{raw_text}</pre>
-                <br><a href='/scan_receipt'>Scan Another</a>
-            """
-            return result_html 
+            return template('verify_receipt', extracted = extracted_data)
                 
         #return template("<h2>OCR Result:</h2><pre>{{text}}</pre><br><a href='/scan_receipt'>Scan Another</a>", text=raw_text)
     
@@ -493,6 +483,35 @@ def home():
             # Clean up the temporary file
             if os.path.exists(temp_filepath):
                 os.remove(temp_filepath)
+
+    # In routes.py, add this new route to handle saving the verified data
+
+@route('/save_scanned_receipt', method='POST')
+def save_scanned_receipt():
+    # Get all the (potentially corrected) data from the verification form
+    store = request.forms.get('store').strip()
+    category = request.forms.get('category').strip()
+    item = request.forms.get('item').strip()
+    quantity = request.forms.get('quantity').strip()
+    ui = request.forms.get('ui').strip()
+    cost = request.forms.get('cost').strip()
+    purchasedate = request.forms.get('purchasedate').strip()
+    status = "open" # Default status for new receipts
+
+    # Connect to DB and insert the new record
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute("""
+        INSERT INTO receipts(store,category,item,quantity,ui,cost,purchasedate,status) 
+        VALUES (?,?,?,?,?,?,?,?)""",
+        (store, category, item, quantity, ui, cost, purchasedate, status)
+    )
+    new_id = c.lastrowid 
+    conn.commit()
+    conn.close()
+    
+    # Redirect to the main expense list to see the new entry
+    redirect('/list')
 
     # end receipt scan route
 
