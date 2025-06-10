@@ -10,6 +10,52 @@ import csv
 import io
 from datetime import datetime
 import math
+import pytesseract
+from PIL import Image
+from pdf2image import convert_from_path
+import tempfile
+import re
+from dateutil.parser import parse
+
+# function to extract scanned receipt details
+def extract_receipt_details(text):
+
+    details = {
+        'store_name': None,
+        'purchase_date': None,
+        'total_amount': None
+    }
+
+    total_match = re.search(r'^Total\s+\$?(\d+\.\d{2})', text, re.IGNORECASE | re.MULTILINE)
+    if total_match:
+        details['total_amount'] = float(total_match.group(1))
+
+    date_pattern = re.compile(
+        r'(\d{1,2}[/\.-]\d{1,2}[/\.-]\d{2,4})|'  # Matches DD/MM/YYYY, DD-MM-YYYY, etc.
+        r'(\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b\s+\d{1,2},?\s+\d{4})' # Matches "Jan 16, 2025"
+    , re.IGNORECASE)
+
+    for line in text.splitlines():
+        match = date_pattern.search(line)
+        if match:
+            try:
+                date_string = match.group(0)
+                parsed_date = parse(date_string)
+                details['purchase_date'] = parsed_date.strftime('%Y-%m-%d')
+                print(f"Found and parsed date:  {details['purchase_date']}")
+                break
+            except (ValueError, TypeError):
+                continue
+
+    lines = text.splitlines()
+    for line in lines:
+        if line.strip(): # Find the first line with actual content
+            details['store_name'] = line.strip()
+            break
+
+    return details
+
+    # end parse data for scanning receipts
 
 # --- Import and call your database setup ---
 import manage_receipt_tables
@@ -388,4 +434,66 @@ def home():
             all_accounts = all_accounts,
             title = "View Transactions"
         )
+    
+    # end transaction pagination
+    
+    # begin receipt scan route
+
+    @route('/scan_receipt', method='GET')
+    @view('scan_receipt_form')
+    def show_scan_form():
+        return dict()
+    
+    @route('/scan_receipt', method='POST')
+    def do_scan_receipt():
+        upload = request.files.get('receipt_image')
+    
+        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(upload.filename)[1]) as temp_file:
+            upload.save(temp_file.name, overwrite=True)
+            temp_filepath = temp_file.name
+    
+        try:
+            raw_text = ""
+            print(f"Processing file: {temp_filepath}")
+    
+            if temp_filepath.lower().endswith('.pdf'):
+                images = convert_from_path(temp_filepath)
+                for img in images:
+                    raw_text += pytesseract.image_to_string(img) + "\n\n--- Page Break ---\n\n"
+            else:
+                img = Image.open(temp_filepath)
+                raw_text = pytesseract.image_to_string(img)
+
+            extracted_data = extract_receipt_details(raw_text)
+
+            print("--- RAW OCR TEXT ---")
+            print(raw_text)
+            print("--- EXTRACTED DATA ---")
+            print(extracted_data)
+
+            result_html = f"""
+                <h2>Extracted Details (For Debugging)</h2>
+                <p><strong>Store:</strong> {extracted_data.get('store_name')}</p>
+                <p><strong>Date:</strong> {extracted_data.get('purchase_date')}</p>
+                <p><strong>Total:</strong> {extracted_data.get('total_amount')}</p>
+                <hr>
+                <h3>Raw Text:</h3>
+                <pre>{raw_text}</pre>
+                <br><a href='/scan_receipt'>Scan Another</a>
+            """
+            return result_html 
+                
+        #return template("<h2>OCR Result:</h2><pre>{{text}}</pre><br><a href='/scan_receipt'>Scan Another</a>", text=raw_text)
+    
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return f"An error occurred: {e}"
+        finally:
+            # Clean up the temporary file
+            if os.path.exists(temp_filepath):
+                os.remove(temp_filepath)
+
+    # end receipt scan route
+
     

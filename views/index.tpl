@@ -9,5 +9,6 @@
         <li><a href="/new">Add New Expense</a></li>
         <li><a href="/transactions">View Transactions</a></li>
         <li><a href="/import_transactions">Import Transactions</a></li>
+        <li><a href="/scan_receipt">Scan Receipts</a></li>
     </ul>
 </nav>
