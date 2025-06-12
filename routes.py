@@ -16,6 +16,7 @@ from pdf2image import convert_from_path
 import tempfile
 import re
 from dateutil.parser import parse
+import json
 
 # function to extract scanned receipt details
 def extract_receipt_details(text):
@@ -75,7 +76,9 @@ def home():
         con = sqlite3.connect("receipts.sqlite")
         c = con.cursor()
         c.execute(""" 
-        select receipts_id,store,category,item,quantity,ui,'$' || cast(cost as float) as cost,purchasedate,status from receipts
+        select receipts_id,store,c.name,item,quantity,ui,'$' || cast(cost as float) as cost,purchasedate,status 
+        from receipts r
+        join categories c on c.categories_id = r.categories_id
         """)
 
         result = c.fetchall()
@@ -484,35 +487,86 @@ def home():
             if os.path.exists(temp_filepath):
                 os.remove(temp_filepath)
 
-    # In routes.py, add this new route to handle saving the verified data
+    @route('/save_scanned_receipt', method='POST')
+    def save_scanned_receipt():
+        store = request.forms.get('store').strip()
+        total_cost = request.forms.get('cost').strip()
+        purchasedate = request.forms.get('purchasedate').strip()
+        line_item_json = request.forms.get('line_items_json')
+        line_items = json.loads(line_item_json)
 
-@route('/save_scanned_receipt', method='POST')
-def save_scanned_receipt():
-    # Get all the (potentially corrected) data from the verification form
-    store = request.forms.get('store').strip()
-    category = request.forms.get('category').strip()
-    item = request.forms.get('item').strip()
-    quantity = request.forms.get('quantity').strip()
-    ui = request.forms.get('ui').strip()
-    cost = request.forms.get('cost').strip()
-    purchasedate = request.forms.get('purchasedate').strip()
-    status = "open" # Default status for new receipts
+        import_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-    # Connect to DB and insert the new record
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute("""
-        INSERT INTO receipts(store,category,item,quantity,ui,cost,purchasedate,status) 
-        VALUES (?,?,?,?,?,?,?,?)""",
-        (store, category, item, quantity, ui, cost, purchasedate, status)
-    )
-    new_id = c.lastrowid 
-    conn.commit()
-    conn.close()
-    
-    # Redirect to the main expense list to see the new entry
-    redirect('/list')
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        c.execute("""
+            INSERT INTO receipt_summaries(store,total_amount,purchase_date,import_date) 
+            VALUES (?,?,?,?)""",
+            (store, purchasedate, float(total_cost), import_timestamp)
+        )
+        new_summary_id = c.lastrowid 
+
+        if line_items:
+            for item in line_items:
+                c.execute("""
+                    insert into receipts(summary_id,item,quantity,cost)
+                    values (?,?,?,?)""",
+                    (new_summary_id,item['description'],item['quantity'],item['cost'])
+                )
+
+        conn.commit()
+        conn.close()
+
+        redirect('/list')
 
     # end receipt scan route
 
+    @route('/add_receipt', method='GET')
+    @view('new_receipt_manual') 
+    def show_manual_add_form():
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
     
+        c.execute("SELECT categories_id, name FROM categories ORDER BY name")
+        all_categories = c.fetchall()
+        conn.close()
+    
+        return dict(
+        all_categories_json=json.dumps(all_categories),
+        title="Add Receipt Manually"
+        )
+
+    @route('/add_receipt', method='POST')
+    def process_manual_add_form():
+        store = request.forms.get('store').strip()
+        purchasedate = request.forms.get('purchasedate').strip()
+        item_descs = request.forms.getall('item_desc')
+        item_category_ids = request.forms.getall('item_category_id')
+        item_qtys = request.forms.getall('item_qty')
+        item_costs = request.forms.getall('item_cost')
+
+        import_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        total_cost = sum([float(cost) for cost in item_costs])
+
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+
+        c.execute("""
+            INSERT INTO receipt_summaries(store, purchase_date, total_amount, import_date) 
+            VALUES (?, ?, ?, ?)""",
+            (store, purchasedate, total_cost, import_timestamp)
+        )
+        new_summary_id = c.lastrowid
+
+        for desc, cat_id, qty, cost in zip(item_descs, item_category_ids, item_qtys, item_costs):
+            c.execute("""
+                INSERT INTO receipts(summary_id, item, categories_id, quantity, cost)
+                VALUES (?, ?, ?, ?, ?)""",
+                (new_summary_id, desc.strip(), cat_id, int(qty), float(cost))
+            )
+    
+        conn.commit()
+        conn.close()
+    
+        redirect('/list')
