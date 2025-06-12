@@ -25,19 +25,45 @@ def setup_database():
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
 
+         # Categories Table
+        c.executescript("""
+            CREATE TABLE IF NOT EXISTS categories(
+                categories_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL UNIQUE,
+                last_modified_ts DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+        print("Table 'categories' checked/created.")
+
+        # Receipt_summaries table
+        c.executescript("""
+            create table if not exists receipt_summaries(
+                summary_id integer not null primary key autoincrement,
+                store text,
+                purchase_date date,
+                total_amount real,
+                import_date datetime not null,
+                last_modified_ts datetime not null default current_timestamp
+            );
+        """)
+        print("Table 'receipt_summaries' checked/created.")
+
         # Receipts Table
         c.executescript("""
             CREATE TABLE IF NOT EXISTS receipts(
                 receipts_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                summary_id integer not null,
                 store TEXT,
-                category TEXT,
+                categories_id integer,
                 item TEXT,
                 quantity TEXT,
-                ui CHAR(2) NOT NULL,
-                cost REAL, -- Changed to REAL for monetary values
+                ui CHAR(2),
+                cost REAL,
                 purchasedate DATE,
                 status TEXT DEFAULT 'open',
-                last_modified_ts DATETIME DEFAULT CURRENT_TIMESTAMP
+                last_modified_ts DATETIME DEFAULT CURRENT_TIMESTAMP,
+                foreign key (summary_id) references receipt_summaries(summary_id),
+                foreign key (categories_id) references categories(categories_id)
             );
         """)
         print("Table 'receipts' checked/created.")
@@ -90,16 +116,6 @@ def setup_database():
             update transactions set last_modified_ts = CURRENT_TIMESTAMP where transactions_id = old.transactions_id;
         END;
         """ )
-
-        # Categories Table
-        c.executescript("""
-            CREATE TABLE IF NOT EXISTS categories(
-                categories_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL UNIQUE,
-                last_modified_ts DATETIME DEFAULT CURRENT_TIMESTAMP
-            );
-        """)
-        print("Table 'categories' checked/created.")
 
         # Core Accounts Table
         c.executescript("""
