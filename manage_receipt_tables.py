@@ -63,7 +63,7 @@ def setup_database():
                 status TEXT DEFAULT 'open',
                 last_modified_ts DATETIME DEFAULT CURRENT_TIMESTAMP,
                 foreign key (summary_id) references receipt_summaries(summary_id),
-                foreign key (categories_id) references categories(categories_id)
+                foreign key (categories_id) references categories(categories_id) on delete set null
             );
         """)
         print("Table 'receipts' checked/created.")
@@ -102,8 +102,8 @@ def setup_database():
                 notes TEXT,
                 import_date DATETIME NOT NULL,
                 last_modified_ts DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (categories_id) REFERENCES categories(categories_id),
-                FOREIGN KEY (core_account_id) REFERENCES core_accounts(core_account_id)
+                FOREIGN KEY (categories_id) REFERENCES categories(categories_id) on delete set null,
+                FOREIGN KEY (core_account_id) REFERENCES core_accounts(core_account_id) 
             );
         """)
         print("Table 'transactions' checked/created.")

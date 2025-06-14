@@ -648,7 +648,10 @@ def home():
         response.content_type = 'application/json'
         return json.dumps({'labels': labels, 'data': data})
     
-    
+    # end chart report route 
+
+    # begin category report table 
+
     @route('/reports/spending-by-category')
     @view('reports')
     def show_category_pie_chart():
@@ -706,6 +709,8 @@ def home():
     @view('category_totals_report')
     def show_category_totals_report():
         return dict(title="Category Totals Report")
+    
+    # end category totals report
 
     # begin show reports page
 
@@ -713,3 +718,68 @@ def home():
     @view('reports_index')
     def show_reports_index():
         return dict(title="Available Reports")
+    
+    # end show reports page
+
+    # begin manage categories
+
+    @route('/manage/categories')
+    @view('manage_categories')
+    def manage_categories():
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        c.execute("select categories_id,name from categories order by name")
+        all_categories = c.fetchall()
+        conn.close()
+
+        return dict(
+            categories = all_categories,
+            title = "Manage Categories'"
+        )
+    
+    @route('/delete/category/<category_id:int>',method='POST')
+    def delete_category(category_id):
+        conn = None
+        try:
+            conn = sqlite3.connect(DB_NAME)
+            c = conn.cursor()
+
+            c.execute("BEGIN TRANSACTION;")
+            c.execute("update transactions set categories_id = NULL where categories_id = ?",(category_id,))
+            c.execute("update receipts set categories_id = NULL where categories_id = ?", (category_id,))
+            c.execute("delete from categories where categories_id = ?", (category_id,))
+            conn.commit()
+
+            return json.dumps({'success': True})
+        
+        except Exception as e:
+            if conn:
+                conn.rollback()
+            import traceback
+            traceback.print_exc()
+            
+            return json.dumps({'success': False, 'message': str(e)})
+        finally:
+            if conn:
+                conn.close()
+
+    @route('/update/category/<category_id:int>',method='POST')
+    def update_category(category_id):
+        try:
+            data = request.json
+            new_name = data.get('name').strip()
+
+            if not new_name:
+                return json.dumps({'success': False, 'message': 'Category name cannot be empty.'})
+            
+            conn = sqlite3.connect(DB_NAME)
+            c = conn.cursor()
+            c.execute("update categories set name = ? where categories_id = ?", (new_name,category_id))
+            conn.commit()
+            conn.close()
+
+            return json.dumps({'success': True})
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return json.dumps({'success': False, 'message': str(e)})

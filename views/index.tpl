@@ -12,5 +12,6 @@
         <li><a href="/scan_receipt">Scan Receipts</a></li>
         <li><a href="/add_receipt">Add New Receipts</a></li>
         <li><a href="/reports">View Reports</a></li>
+        <li><a href="/manage/categories">Manage Categories</a></li>
     </ul>
 </nav>
