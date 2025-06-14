@@ -648,11 +648,68 @@ def home():
         response.content_type = 'application/json'
         return json.dumps({'labels': labels, 'data': data})
     
+    
+    @route('/reports/spending-by-category')
+    @view('reports')
+    def show_category_pie_chart():
+        return dict(title="Spending by Category Report")
+
     # end chart building route
+
+    #begin category totals table view report route
+
+    @route('/api/category-totals')
+    def api_category_totals():
+        today = datetime.now()
+        start_of_month = today.strftime('%Y-%m-01')
+        end_of_month = today .strftime('%Y-%m-d')
+
+        conn = sqlite3.connect(DB_NAME)
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+
+        c.execute("""
+            SELECT
+                category_name,
+                SUM(amount) AS net_total
+            FROM (
+                SELECT
+                    cat.name AS category_name,
+                    t.amount AS amount
+                FROM transactions AS t
+                LEFT JOIN categories AS cat ON t.categories_id = cat.categories_id
+                WHERE t.transaction_date BETWEEN ? AND ?
+
+                UNION ALL
+
+                SELECT
+                    cat.name AS category_name,
+                    -r.cost AS amount
+                FROM receipts AS r
+                JOIN receipt_summaries AS rs ON r.summary_id = rs.summary_id
+                LEFT JOIN categories AS cat ON r.categories_id = cat.categories_id
+                WHERE rs.purchase_date BETWEEN ? AND ?
+            ) AS all_entries
+            GROUP BY category_name
+            ORDER BY category_name
+        """, (start_of_month, end_of_month, start_of_month, end_of_month))
+
+        results = c.fetchall()
+        conn.close()
+
+        category_totals = [dict(row) for row in results]
+
+        response.content_type = 'application/json'
+        return json.dumps(category_totals)
+    
+    @route('/reports/category-totals')
+    @view('category_totals_report')
+    def show_category_totals_report():
+        return dict(title="Category Totals Report")
 
     # begin show reports page
 
     @route('/reports')
-    @view('reports')
-    def show_reports():
-        return dict()
+    @view('reports_index')
+    def show_reports_index():
+        return dict(title="Available Reports")

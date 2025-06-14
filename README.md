@@ -49,6 +49,6 @@ Import Transaction
 3. Manage your receipts and budget and transactions 
 
 ## ToDo: 
-1. Build out an OCR to text capability to scan receipts and load into the app.
-2. Add report building and visualization processes.
-3. AI to generate expense categories on the fly and per transaction.
+1. Add full CRUD operations for catgegories, transactions, receipts.
+2. Standardize css for all views.
+3. Update navigation for all views.
