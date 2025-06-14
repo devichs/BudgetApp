@@ -36,6 +36,7 @@
 				</div>
 			</footer>
 	
+			<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 			<script src="/static/scripts/sorttable.js"></script>
 		</body>
 </html>

@@ -11,5 +11,6 @@
         <li><a href="/import_transactions">Import Transactions</a></li>
         <li><a href="/scan_receipt">Scan Receipts</a></li>
         <li><a href="/add_receipt">Add New Receipts</a></li>
+        <li><a href="/reports">View Reports</a></li>
     </ul>
 </nav>
