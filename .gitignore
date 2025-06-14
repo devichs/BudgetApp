@@ -408,3 +408,16 @@ web.config
 web.degug.config
 Budget.pyproj
 receipts.sqlite
+.DS_Store
+
+# Virtual Environment
+budgetApp/
+venv/
+.venv/
+
+# macOS specific
+.DS_Store
+
+# Python cache
+__pycache__/
+*.pyc

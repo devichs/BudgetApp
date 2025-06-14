@@ -1,6 +1,6 @@
 # routes.py
 
-from bottle import route, view, run, template, request, static_file, error, get, post, redirect
+from bottle import route, view, run, template, request, static_file, error, get, post, redirect, response
 from datetime import datetime
 import sqlite3
 import codecs
@@ -58,7 +58,7 @@ def extract_receipt_details(text):
 
     # end parse data for scanning receipts
 
-# --- Import and call your database setup ---
+# --- Import and call database ---
 import manage_receipt_tables
 manage_receipt_tables.setup_database()
 # -------------------------------------------
@@ -86,23 +86,53 @@ def home():
         return output
    
     @route("/budget")
-    def  budget():
-        con = sqlite3.connect("receipts.sqlite")
-        c = con.cursor()
-        c.execute("""
-        select distinct '$' || cast(amount as float) as 'amount', date(budgetdate) as 'DateSet','$' || r.cost as 'ExpensesTotal','$' || cast((x.budget - r.cost) as float) as 'WhatsLleft'
-            from budget b,
-            (select sum(cost)cost from receipts where purchasedate >= (select max(date(budgetdate)) from budget))r,
-        (select distinct amount as budget,budget_id  from budget where budget_id in (
-        select max(budget_id) from budget))x
-        where b.budget_id in (
-        select max(budget_id) from budget) 
-        order by b.budgetdate desc	
-        """)
+    @view("budget")
+    def  unified_budget_view():
+        today = datetime.now()
+        start_of_month = today.strftime('%Y-%m-01')
+        end_of_month = today .strftime('%Y-%m-%d')
 
-        result = c.fetchall()	
-        output = template("budget",rows = result)   
-        return output
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        c.execute("""
+            select sum(amount)
+            from transactions
+            where amount > 0 and transaction_date >= ? and transaction_date <= ?            
+        """, (start_of_month,end_of_month))
+        total_income_result = c.fetchone() [0]
+        total_income = total_income_result if total_income_result is not None else 0.0
+
+        c.execute("""
+            select sum(amount)
+            from transactions
+            where amount < 0 and transaction_date >= ? and transaction_date <= ?
+        """,(start_of_month,end_of_month))
+        transactions_expenses_result = c.fetchone()[0]
+        transactions_expenses = transactions_expenses_result if transactions_expenses_result is not None else 0.0
+
+        c.execute("""
+            select sum(r.cost)
+            from receipts as r
+            join receipt_summaries as rs on r.summary_id = rs.summary_id
+            where rs.purchase_date >= ? and rs.purchase_date <= ?
+        """, (start_of_month,end_of_month))
+        receipts_expenses_result = c.fetchone()[0]
+        receipts_expenses = receipts_expenses_result if receipts_expenses_result is not None else 0.0
+
+        total_expenses = abs(transactions_expenses) + receipts_expenses
+
+        conn.close()
+
+        whats_left = total_income - total_expenses
+
+        return dict(
+            title = f"Budget Summary for {today.strftime('%B %Y')}",
+            start_date = start_of_month,
+            end_date = end_of_month,
+            total_income = total_income,
+            total_expenses = total_expenses,
+            whats_left = whats_left
+        )
     
     @route("/new",method = "GET")
     def new_item(): 
@@ -126,7 +156,6 @@ def home():
         else:
             return template("new_receipt.tpl") 
 
-    
     @route('/edit/<receipt_id:int>', method='GET')
     @view('edit_receipt') 
     def show_edit_receipt_form(receipt_id):
@@ -154,8 +183,6 @@ def home():
         ui = request.forms.get('ui').strip()
         cost = request.forms.get('cost').strip() 
         purchasedate = request.forms.get('purchasedate').strip() 
-
-        # TODO: Validate data (e.g., cost is a number, date format is correct)
 
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
@@ -475,15 +502,12 @@ def home():
             print(extracted_data)
 
             return template('verify_receipt', extracted = extracted_data)
-                
-        #return template("<h2>OCR Result:</h2><pre>{{text}}</pre><br><a href='/scan_receipt'>Scan Another</a>", text=raw_text)
-    
+                    
         except Exception as e:
             import traceback
             traceback.print_exc()
             return f"An error occurred: {e}"
         finally:
-            # Clean up the temporary file
             if os.path.exists(temp_filepath):
                 os.remove(temp_filepath)
 
@@ -520,6 +544,8 @@ def home():
         redirect('/list')
 
     # end receipt scan route
+
+    # begin add_receipt route
 
     @route('/add_receipt', method='GET')
     @view('new_receipt_manual') 
@@ -570,3 +596,63 @@ def home():
         conn.close()
     
         redirect('/list')
+
+    # end add_receipt route
+
+    # begin chart building route
+
+    @route('/api/spending-by-category')
+    def api_spending_by_category ():
+        today = datetime.now()
+        start_of_month = today.strftime('%Y-%m-01')
+        end_of_month = today .strftime('%Y-%m-d')
+
+        conn = sqlite3.connect(DB_NAME)
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+
+        # query to build report
+        c.execute("""
+        select 
+            category_name
+            ,sum(expense_amount) as total_amount
+        from (
+            select
+                cat.name as category_name
+                ,abs(t.amount) as expense_amount
+            from transactions as t
+            join categories as cat on t.categories_id = cat.categories_id
+            where t.amount < 0 and t.transaction_date between ? and ?
+
+            union all
+
+            select 
+                cat.name as category_name
+                ,r.cost as expense_amount
+            from receipts as r 
+            join receipt_summaries as rs on r.summary_id = rs.summary_id
+            join categories as cat on r.categories_id = cat.categories_id
+            where rs.purchase_date between ? and ?
+        ) as all_expenses
+        where category_name is not null
+        group by category_name
+        order by total_amount desc
+        """, (start_of_month,end_of_month,start_of_month,end_of_month))
+
+        results = c.fetchall()
+        conn.close()
+
+        labels = [row['category_name'] for row in results]
+        data = [row['total_amount'] for row in results]
+
+        response.content_type = 'application/json'
+        return json.dumps({'labels': labels, 'data': data})
+    
+    # end chart building route
+
+    # begin show reports page
+
+    @route('/reports')
+    @view('reports')
+    def show_reports():
+        return dict()
