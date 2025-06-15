@@ -76,9 +76,9 @@ def home():
         con = sqlite3.connect("receipts.sqlite")
         c = con.cursor()
         c.execute(""" 
-        select receipts_id,store,c.name,item,quantity,ui,'$' || cast(cost as float) as cost,purchasedate,status 
+        select receipts_id,store,c.category_name,item,quantity,ui,'$' || cast(cost as float) as cost,purchasedate,status 
         from receipts r
-        join categories c on c.categories_id = r.categories_id
+        join categories c on c.category_id = r.category_id
         """)
 
         result = c.fetchall()
@@ -224,12 +224,12 @@ def home():
         category_name = category_name.strip()
         if not category_name:
             return None
-        db_cursor.execute("select categories_id from categories where name = ?",(category_name,))
+        db_cursor.execute("select category_id from categories where category_name = ?",(category_name,))
         row = db_cursor.fetchone()
         if row:
             return row[0]
         else:
-            db_cursor.execute("insert into categories (name) values (?)",(category_name,))
+            db_cursor.execute("insert into categories (category_name) values (?)",(category_name,))
             return db_cursor.lastrowid
 
     def get_or_create_core_account_id(account_name,account_type,db_cursor):
@@ -307,10 +307,10 @@ def home():
                         print(f"Row {row_number}: Guessed category '{guessed_category}' for '{description}' from this batch.")
                     else:
                         c.execute("""
-                                  select cat.name
+                                  select cat.category_name
                                   from transactions t
-                                  join categories cat on t.categories_id = cat.categories_id
-                                  where t.description like ? and t.categories_id is not null
+                                  join categories cat on t.category_id = cat.category_id
+                                  where t.description like ? and t.category_id is not null
                                   order by t.import_date desc
                                   limit 1
                                   """, ('%' + search_keyword + '%',))
@@ -344,7 +344,7 @@ def home():
                     skipped_count += 1
                     continue
 
-                categories_id = get_or_create_categories_id(category_name,c)
+                category_id = get_or_create_categories_id(category_name,c)
 
                 c.execute("select 1 from transactions where transaction_date = ? and description = ? and amount = ?", (transaction_date,description,amount))
                 if c.fetchone():
@@ -355,7 +355,7 @@ def home():
                     "date": transaction_date,
                     "description": description,
                     "amount": amount,
-                    "categories_id": categories_id, 
+                    "category_id": category_id, 
                     "core_account_id": core_account_id,
                     "notes": "Imported",
                     "import_date": import_timestamp
@@ -368,8 +368,8 @@ def home():
                 continue
 
         if transacations_to_add:
-            sql = "insert into transactions (transaction_date,description,amount,categories_id,core_account_id,notes,import_date) values (?,?,?,?,?,?,?)"
-            insert_data = [(tx['date'],tx['description'],tx['amount'],tx['categories_id'],tx['core_account_id'],tx['notes'],tx['import_date']) for tx in transacations_to_add]
+            sql = "insert into transactions (transaction_date,description,amount,category_id,core_account_id,notes,import_date) values (?,?,?,?,?,?,?)"
+            insert_data = [(tx['date'],tx['description'],tx['amount'],tx['category_id'],tx['core_account_id'],tx['notes'],tx['import_date']) for tx in transacations_to_add]
             c.executemany(sql,insert_data)
             imported_count = len(transacations_to_add)
 
@@ -428,19 +428,20 @@ def home():
         offset = (page -1) * per_page
 
         main_sql = f"""
-            select t.transactions_id
+            select t.transaction_id
                   ,t.transaction_date
                   ,t.description
                   ,t.amount
-                  ,cat.name as category_name
+                  ,cat.category_name as category_name
                   ,ca.core_account_name
+                  ,t.has_receipt
                   ,t.import_date
                   ,t.last_modified_ts
             from transactions t
-            left join categories cat on t.categories_id = cat.categories_id
+            left join categories cat on t.category_id = cat.category_id
             left join core_accounts ca on t.core_account_id = ca.core_account_id
             where {where_sql}
-            order by t.transaction_date desc, t.transactions_id desc
+            order by t.transaction_date desc, t.transaction_id desc
             limit ? offset ?
             """
         
@@ -469,13 +470,15 @@ def home():
     
     # begin receipt scan route
 
-    @route('/scan_receipt', method='GET')
+    @route('/scan_receipt/<transaction_id:int>', method='GET')
     @view('scan_receipt_form')
-    def show_scan_form():
-        return dict()
+    def show_scan_form(transaction_id):
+        return dict(transaction_id=transaction_id,
+                    title="Scan a New Receipt"
+                    )
     
-    @route('/scan_receipt', method='POST')
-    def do_scan_receipt():
+    @route('/scan_receipt/<transaction_id:int>', method='POST')
+    def do_scan_receipt(transaction_id):
         upload = request.files.get('receipt_image')
     
         with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(upload.filename)[1]) as temp_file:
@@ -501,7 +504,8 @@ def home():
             print("--- EXTRACTED DATA ---")
             print(extracted_data)
 
-            return template('verify_receipt', extracted = extracted_data)
+            return template('verify_receipt', extracted = extracted_data,
+                                                transaction_id=transaction_id)
                     
         except Exception as e:
             import traceback
@@ -511,8 +515,8 @@ def home():
             if os.path.exists(temp_filepath):
                 os.remove(temp_filepath)
 
-    @route('/save_scanned_receipt', method='POST')
-    def save_scanned_receipt():
+    @route('/save_scanned_receipt/<transaction_id:int>', method='POST')
+    def save_scanned_receipt(transaction_id):
         store = request.forms.get('store').strip()
         total_cost = request.forms.get('cost').strip()
         purchasedate = request.forms.get('purchasedate').strip()
@@ -523,25 +527,34 @@ def home():
 
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
-        c.execute("""
-            INSERT INTO receipt_summaries(store,total_amount,purchase_date,import_date) 
-            VALUES (?,?,?,?)""",
-            (store, purchasedate, float(total_cost), import_timestamp)
-        )
-        new_summary_id = c.lastrowid 
+        c.execute("BEGIN TRANSACTION;")
+        try:
+            c.execute("""
+                INSERT INTO receipt_summaries(transaction_id, store, purchase_date, total_amount, import_date) 
+                VALUES (?, ?, ?, ?, ?)""",
+                (transaction_id, store, purchasedate, float(total_cost), import_timestamp)
+            )
+            new_summary_id = c.lastrowid 
 
-        if line_items:
-            for item in line_items:
-                c.execute("""
-                    insert into receipts(summary_id,item,quantity,cost)
-                    values (?,?,?,?)""",
-                    (new_summary_id,item['description'],item['quantity'],item['cost'])
-                )
+            if line_items:
+                for item in line_items:
+                    c.execute("""
+                        INSERT INTO receipt_line_items(summary_id, description, quantity, cost)
+                        VALUES (?, ?, ?, ?)""",
+                        (new_summary_id, item['description'], item['quantity'], item['cost'])
+                    )
 
-        conn.commit()
-        conn.close()
+            c.execute("update transactions set has_receipt = 1 where transaction_id = ?", (transaction_id,))
 
-        redirect('/list')
+            conn.commit()
+        except Exception as e:
+            conn.rollback() 
+            print("ERROR saving scanned receipt:",e)
+            raise e
+        finally:
+            conn.close()
+
+        redirect('/transactions')
 
     # end receipt scan route
 
@@ -553,7 +566,7 @@ def home():
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
     
-        c.execute("SELECT categories_id, name FROM categories ORDER BY name")
+        c.execute("SELECT category_id, category_name FROM categories ORDER BY category_name")
         all_categories = c.fetchall()
         conn.close()
     
@@ -587,7 +600,7 @@ def home():
 
         for desc, cat_id, qty, cost in zip(item_descs, item_category_ids, item_qtys, item_costs):
             c.execute("""
-                INSERT INTO receipts(summary_id, item, categories_id, quantity, cost)
+                INSERT INTO receipts(summary_id, item, category_id, quantity, cost)
                 VALUES (?, ?, ?, ?, ?)""",
                 (new_summary_id, desc.strip(), cat_id, int(qty), float(cost))
             )
@@ -618,20 +631,20 @@ def home():
             ,sum(expense_amount) as total_amount
         from (
             select
-                cat.name as category_name
+                cat.category_name as category_name
                 ,abs(t.amount) as expense_amount
             from transactions as t
-            join categories as cat on t.categories_id = cat.categories_id
+            join categories as cat on t.category_id = cat.category_id
             where t.amount < 0 and t.transaction_date between ? and ?
 
             union all
 
             select 
-                cat.name as category_name
+                cat.category_name as category_name
                 ,r.cost as expense_amount
             from receipts as r 
             join receipt_summaries as rs on r.summary_id = rs.summary_id
-            join categories as cat on r.categories_id = cat.categories_id
+            join categories as cat on r.category_id = cat.category_id
             where rs.purchase_date between ? and ?
         ) as all_expenses
         where category_name is not null
@@ -677,20 +690,20 @@ def home():
                 SUM(amount) AS net_total
             FROM (
                 SELECT
-                    cat.name AS category_name,
+                    cat.category_name AS category_name,
                     t.amount AS amount
                 FROM transactions AS t
-                LEFT JOIN categories AS cat ON t.categories_id = cat.categories_id
+                LEFT JOIN categories AS cat ON t.category_id = cat.category_id
                 WHERE t.transaction_date BETWEEN ? AND ?
 
                 UNION ALL
 
                 SELECT
-                    cat.name AS category_name,
+                    cat.category_name AS category_name,
                     -r.cost AS amount
                 FROM receipts AS r
                 JOIN receipt_summaries AS rs ON r.summary_id = rs.summary_id
-                LEFT JOIN categories AS cat ON r.categories_id = cat.categories_id
+                LEFT JOIN categories AS cat ON r.category_id = cat.category_id
                 WHERE rs.purchase_date BETWEEN ? AND ?
             ) AS all_entries
             GROUP BY category_name
@@ -728,7 +741,7 @@ def home():
     def manage_categories():
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
-        c.execute("select categories_id,name from categories order by name")
+        c.execute("select category_id,category_name from categories order by category_name")
         all_categories = c.fetchall()
         conn.close()
 
@@ -745,9 +758,9 @@ def home():
             c = conn.cursor()
 
             c.execute("BEGIN TRANSACTION;")
-            c.execute("update transactions set categories_id = NULL where categories_id = ?",(category_id,))
-            c.execute("update receipts set categories_id = NULL where categories_id = ?", (category_id,))
-            c.execute("delete from categories where categories_id = ?", (category_id,))
+            c.execute("update transactions set category_id = NULL where category_id = ?",(category_id,))
+            c.execute("update receipts set category_id = NULL where category_id = ?", (category_id,))
+            c.execute("delete from categories where category_id = ?", (category_id,))
             conn.commit()
 
             return json.dumps({'success': True})
@@ -774,7 +787,7 @@ def home():
             
             conn = sqlite3.connect(DB_NAME)
             c = conn.cursor()
-            c.execute("update categories set name = ? where categories_id = ?", (new_name,category_id))
+            c.execute("update categories set category_name = ? where category_id = ?", (new_name,category_id))
             conn.commit()
             conn.close()
 

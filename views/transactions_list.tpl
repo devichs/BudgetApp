@@ -50,21 +50,23 @@
             <th>Category</th>
             <th>Account</th>
             <th class="money">Amount</th>
-            <th>Actions</th>
+            <th>Receipt</th>
         </tr>
     </thead>
     <tbody>
         % for tx in transactions:
         <tr>
             <td>{{tx[1]}}</td> <td>{{tx[2]}}</td> <td>{{tx[4] or 'Uncategorized'}}</td> <td>{{tx[5] or 'N/A'}}</td> <td class="money">${{ "{:,.2f}".format(tx[3]) }}</td> <td>
-                %# <a href="/edit_transaction/{{tx[0]}}">Edit</a> - Placeholder for future edit link
+                % if tx[6] == 1:
+                    <a href="/view_reciept/{{tx[0]}}">(View)></a>
+                % else:
+                    <a href="/scan_receipt/{{tx[0]}}">+ Add Receipt</a>
+                % end
             </td>
         </tr>
         % end
     </tbody>
 </table>
-
-%# ... your </table> for transactions ...
 
         <ul class="ulpagination">
     

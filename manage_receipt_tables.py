@@ -28,8 +28,8 @@ def setup_database():
          # Categories Table
         c.executescript("""
             CREATE TABLE IF NOT EXISTS categories(
-                categories_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL UNIQUE,
+                category_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                category_name TEXT NOT NULL UNIQUE,
                 last_modified_ts DATETIME DEFAULT CURRENT_TIMESTAMP
             );
         """)
@@ -39,31 +39,28 @@ def setup_database():
         c.executescript("""
             create table if not exists receipt_summaries(
                 summary_id integer not null primary key autoincrement,
+                transaction_id integer not null unique,
                 store text,
                 purchase_date date,
                 total_amount real,
                 import_date datetime not null,
-                last_modified_ts datetime not null default current_timestamp
+                last_modified_ts datetime not null default current_timestamp,
+                foreign key (transaction_id) references transactions(transaction_id) on delete cascade
             );
         """)
         print("Table 'receipt_summaries' checked/created.")
 
         # Receipts Table
         c.executescript("""
-            CREATE TABLE IF NOT EXISTS receipts(
-                receipts_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            CREATE TABLE IF NOT EXISTS receipt_line_items(
+                receipt_line_item_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                 summary_id integer not null,
-                store TEXT,
-                categories_id integer,
-                item TEXT,
-                quantity TEXT,
-                ui CHAR(2),
-                cost REAL,
+                description text not null,
+                quantity integer not null,
+                cost REAL not null,
                 purchasedate DATE,
-                status TEXT DEFAULT 'open',
                 last_modified_ts DATETIME DEFAULT CURRENT_TIMESTAMP,
-                foreign key (summary_id) references receipt_summaries(summary_id),
-                foreign key (categories_id) references categories(categories_id) on delete set null
+                foreign key (summary_id) references receipt_summaries(summary_id) on delete cascade
             );
         """)
         print("Table 'receipts' checked/created.")
@@ -93,29 +90,31 @@ def setup_database():
         # Transactions Table
         c.executescript("""
             CREATE TABLE IF NOT EXISTS transactions(
-                transactions_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                transaction_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                 transaction_date TEXT NOT NULL,
                 description TEXT NOT NULL,
                 amount REAL NOT NULL,
-                categories_id INTEGER,
+                category_id INTEGER,
                 core_account_id INTEGER,
+                has_receipt integer not null default 0,
                 notes TEXT,
                 import_date DATETIME NOT NULL,
                 last_modified_ts DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (categories_id) REFERENCES categories(categories_id) on delete set null,
+                FOREIGN KEY (category_id) REFERENCES categories(category_id) on delete set null,
                 FOREIGN KEY (core_account_id) REFERENCES core_accounts(core_account_id) 
             );
         """)
-        print("Table 'transactions' checked/created.")
+        print("Table 'transactions' (as primary) schema update.")
 
-        # trigger to update last_modified_ts on any row update
         c.executescript("""
+        drop trigger if exists update_transactions_modtime;
         CREATE TRIGGER IF NOT EXISTS update_transactions_modtime
         AFTER UPDATE ON transactions FOR EACH ROW 
         BEGIN
-            update transactions set last_modified_ts = CURRENT_TIMESTAMP where transactions_id = old.transactions_id;
+            update transactions set last_modified_ts = CURRENT_TIMESTAMP where transaction_id = old.transaction_id;
         END;
         """ )
+        print("Trigger 'update_transactions_modtime' re-applied.")
 
         # Core Accounts Table
         c.executescript("""
