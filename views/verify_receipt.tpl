@@ -1,7 +1,6 @@
 %# views/verify_receipt.tpl
 % rebase('base.tpl', title='Verify Scanned Receipt', load_base_style=True, current_year=current_year)
 
-%# Import json to pass the list of items to the next step
 % import json
 
 <h2>Verify Scanned Details</h2>
@@ -25,7 +24,7 @@
 </fieldset>
 % end
 
-<form action="/save_scanned_receipt" method="post" class="new-item">
+<form action="/save_scanned_receipt/{{transaction_id}}" method="post" class="new-item">
     <input type="hidden" name="line_items_json" value="{{json.dumps(extracted.get('line_items', []))}}">
 
     <ul>

@@ -3,7 +3,7 @@
 
 <h2>Upload a Receipt to Scan</h2>
 
-<form action="/scan_receipt" method="post" enctype="multipart/form-data">
+<form action="/scan_receipt/{{transaction_id}}" method="post" enctype="multipart/form-data">
     <div>
         <label for="receipt_image">Select Receipt File (PDF, JPG, PNG):</label>
         <input type="file" id="receipt_image" name="receipt_image" accept="image/png, image/jpeg, application/pdf" required>
