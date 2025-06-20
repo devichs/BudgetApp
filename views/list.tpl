@@ -19,7 +19,6 @@
 					<th>Category</th>
 					<th>Item</th>
 					<th>Quantity</th>
-					<th>UI</th>
 					<th>Cost</th>    
 					<th>Purchase date</th>
 					<th>Status</th>
@@ -36,7 +35,6 @@
 					<td>{{row[5]}}</td>
 					<td>{{row[6]}}</td> 
 					<td>{{row[7]}}</td>
-					<td>{{row[8]}}</td>
 					<td>
 						<a href="/edit/{{row[0]}}">Edit</a>
 						%# todo add delete

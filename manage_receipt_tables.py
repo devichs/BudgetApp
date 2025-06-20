@@ -27,14 +27,89 @@ def setup_database():
 
          # Categories Table
         c.executescript("""
-            CREATE TABLE IF NOT EXISTS categories(
-                category_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                category_name TEXT NOT NULL UNIQUE,
+            CREATE TABLE IF NOT EXISTS main_categories(
+                main_category_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                main_category_name TEXT NOT NULL UNIQUE,
                 last_modified_ts DATETIME DEFAULT CURRENT_TIMESTAMP
             );
         """)
-        print("Table 'categories' checked/created.")
+        print("Table 'main_categories' checked/created.")
 
+        # seed main_categories
+
+        main_categories_to_seed = [
+            'Recurring-Fixed'
+            ,'Recurring-NotFixed'
+            ,'Discretionary-NotRecurring'
+        ]
+
+        c.executemany(
+            "insert or ignore into main_categories (main_category_name) values (?)",
+            [(cat,) for cat in main_categories_to_seed]
+        )
+        print("Main categories seeded.")
+
+        c.executescript("""
+            CREATE TABLE IF NOT EXISTS sub_categories(
+                sub_category_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                sub_category_name TEXT NOT NULL UNIQUE,
+                main_category_id integer not null,
+                last_modified_ts DATETIME DEFAULT CURRENT_TIMESTAMP,
+                unique(sub_category_name,main_category_id),
+                foreign key (main_category_id) references main_categories(main_category_id)
+            );
+        """)
+        print("Table 'sub_categories' checked/created.")
+
+        # seed categories table if needed
+        core_sub_categories = [
+			'AmazonPurchase'
+			,'AppleServicesPayment'
+			,'AtmWithdrawal'
+			,'BankDeposit'
+			,'BankTransfer'
+			,'CarExpense'
+			,'CarGas'
+			,'CarInsurancePayemnt'
+			,'CarParking'
+			,'CashedCheck'
+			,'ClothingPurchase'
+			,'CollegeFundDeposit'
+			,'CreditCardCredit'
+			,'CreditCardPayment'
+			,'Dentist'
+			,'Discretionary-NotRecurring'            
+			,'EducationExpense'
+			,'Entertainment'
+			,'FastFood'
+			,'Groceries'
+			,'HomeRepair'
+			,'Income-Paycheck'
+			,'InternetServicePayment'
+			,'InterestIncome'
+			,'MobilePhonePlanPayment'
+			,'MortgagePayment'
+			,'MusicLessons'
+			,'PersonalCare'
+			,'Pharmacy'
+			,'PostOffice'
+			,'PurchaseReturnCredit'
+			,'Recurring-Fixed'
+			,'Recurring-NotFixed'
+			,'Restaurants'
+			,'RoadToll'
+			,'Shopping'
+			,'SportsClubMembership'
+			,'StreamingServices'
+			,'Taxi'
+			,'Travel'
+			,'Utilities'
+		]
+        c.executemany(
+			    "insert or ignore into sub_categories (sub_category_name) values (?)", [(category,) for category in core_sub_categories]
+			    )
+        print(f"Core sub_categories seeded/verified.")
+        
         # Receipt_summaries table
         c.executescript("""
             create table if not exists receipt_summaries(
@@ -50,7 +125,7 @@ def setup_database():
         """)
         print("Table 'receipt_summaries' checked/created.")
 
-        # Receipts Table
+        # Receipts Line Items Table
         c.executescript("""
             CREATE TABLE IF NOT EXISTS receipt_line_items(
                 receipt_line_item_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -59,8 +134,10 @@ def setup_database():
                 quantity integer not null,
                 cost REAL not null,
                 purchasedate DATE,
+                sub_category_id integer,
                 last_modified_ts DATETIME DEFAULT CURRENT_TIMESTAMP,
-                foreign key (summary_id) references receipt_summaries(summary_id) on delete cascade
+                foreign key (summary_id) references receipt_summaries(summary_id) on delete cascade,
+                foreign key (sub_category_id) references sub_categories(sub_category_id) on delete set null
             );
         """)
         print("Table 'receipts' checked/created.")
@@ -76,17 +153,6 @@ def setup_database():
         """)
         print("Table 'budget' checked/created.")
 
-        # UILOOKUP Table
-        c.executescript("""
-            CREATE TABLE IF NOT EXISTS uilookup(
-                uilookup_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                ui CHAR(2) NOT NULL UNIQUE,
-                description TEXT,
-                last_modified_ts DATETIME DEFAULT CURRENT_TIMESTAMP
-            );
-        """)
-        print("Table 'uilookup' checked/created.")
-
         # Transactions Table
         c.executescript("""
             CREATE TABLE IF NOT EXISTS transactions(
@@ -94,13 +160,13 @@ def setup_database():
                 transaction_date TEXT NOT NULL,
                 description TEXT NOT NULL,
                 amount REAL NOT NULL,
-                category_id INTEGER,
+                sub_category_id INTEGER,
                 core_account_id INTEGER,
                 has_receipt integer not null default 0,
                 notes TEXT,
                 import_date DATETIME NOT NULL,
                 last_modified_ts DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (category_id) REFERENCES categories(category_id) on delete set null,
+                FOREIGN KEY (sub_category_id) REFERENCES sub_categories(sub_category_id) on delete set null,
                 FOREIGN KEY (core_account_id) REFERENCES core_accounts(core_account_id) 
             );
         """)
@@ -126,38 +192,6 @@ def setup_database():
             );                    
         """)
         print("Table 'core_accounts' checked/created.")
-
-        # Populate uilookup table (only if it's empty or using INSERT OR IGNORE)
-        # Check if CSV file exists
-        if not os.path.exists(CSV_FILE_PATH):
-            print(f"Warning: CSV file for uilookup not found at {CSV_FILE_PATH}")
-        else:
-            print(f"Populating 'uilookup' from {CSV_FILE_PATH}...")
-            try:
-                with open(CSV_FILE_PATH, "r", encoding='utf-8') as csv_file_obj: # Specify encoding
-                    reader = csv.reader(csv_file_obj)
-                    # Skip header row if your CSV has one
-                    # next(reader, None) 
-                    
-                    insert_sql = "INSERT OR IGNORE INTO uilookup(ui, description) VALUES (?, ?);"
-                    rows_to_insert = []
-                    for row in reader:
-                        if len(row) >= 2: # Ensure row has at least two elements
-                            rows_to_insert.append((row[0].strip(), row[1].strip()))
-                        else:
-                            print(f"Skipping malformed row in CSV: {row}")
-                    
-                    if rows_to_insert:
-                        c.executemany(insert_sql, rows_to_insert)
-                        print(f"Inserted/ignored {len(rows_to_insert)} rows into 'uilookup'.")
-                    else:
-                        print("No valid rows found in CSV to insert into 'uilookup'.")
-
-            except FileNotFoundError:
-                print(f"ERROR: Could not find the CSV file at {CSV_FILE_PATH}")
-            except Exception as e:
-                print(f"ERROR: Could not process CSV file {CSV_FILE_PATH}: {e}")
-
 
         conn.commit()
         print(f"Database '{DB_NAME}' setup complete.")

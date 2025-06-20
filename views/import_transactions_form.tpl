@@ -12,31 +12,36 @@
     <legend>Import Transactions from a Core Account CSV export file</legend>
 
 % if defined('message') and message:
-    <p style="color: green; border: 1px solid green; padding: 10px; border-radius: 5px;">{{message}}</p>
+<div class="message-box success">
+    <strong>Success!</strong><br>
+    {{message}}
+</div>
 % end
 % if defined('error_message') and error_message:
-    <p style="color: red; border: 1px solid red; padding: 10px; border-radius: 5px;">{{error_message}}</p>
+<div class="message-box error">
+    <strong>Error:</strong><br>
+    {{error_message}}
+</div>
 % end
 
-<form class =  "import-transactions" action="/import_transactions" method="post" enctype="multipart/form-data">
-    <ul>
-        <li>
-            <label for="core_account_name">Import From Account:</label>
-            <input type="text" id="core_account_name" name="core_account_name" placeholder="e.g., Amex Gold Card" required>
-        </li>
-        <br>
-        <li>
-            <label for="core_account_type">Account Type (Optional):</label>
-            <input type="text" id="core_account_type" name="core_account_type" placeholder="e.g., Credit Card, Checking">     
-        </li>
-        <br>
-        <p>File must have columns: "Date", "Description", "Category", "Amount"</p>
-        <li>
-            <label for="csvfile">Select CSV file to import:</label>
-            <input type="file" id="csvfile" name="csvfile" accept=".csv" required>
-        </li>
-        <br>
-    </ul>
+<form action="/import_transactions" method="post" enctype="multipart/form-data">
+    <div>
+        <label for="core_account_name">Import From Account:</label>
+        <input type="text" id="core_account_name" name="core_account_name" placeholder="e.g., Amex Gold Card" required>
+    </div>
+    <br>
+    <div>
+        <label for="core_account_type">Account Type (Optional):</label>
+        <input type="text" id="core_account_type" name="core_account_type" placeholder="e.g., Credit Card, Checking">
+    </div>
+    <br>
+    <div>
+        <label for="csvfile">Select CSV file to import:</label>
+        <p style="font-size: smaller; color: #555;">File must have columns: "Date", "Description", "Category", "SubCategory", "Amount"</p>
+        <input type="file" id="csvfile" name="csvfile" accept=".csv" required>
+    </div>
+    <br>
+    <div>
         <input type="submit" value="Import Transactions">
-</fieldset>   
+    </div>
 </form>

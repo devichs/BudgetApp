@@ -13,5 +13,6 @@
         <li><a href="/add_receipt">Add New Receipts</a></li>
         <li><a href="/reports">View Reports</a></li>
         <li><a href="/manage/categories">Manage Categories</a></li>
+        <li><a href="/manage/descriptions">Manage Descriptions</a></li>
     </ul>
 </nav>
