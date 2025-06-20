@@ -58,7 +58,7 @@
         <tr>
             <td>{{tx[1]}}</td> <td>{{tx[2]}}</td> <td>{{tx[4] or 'Uncategorized'}}</td> <td>{{tx[5] or 'N/A'}}</td> <td class="money">${{ "{:,.2f}".format(tx[3]) }}</td> <td>
                 % if tx[6] == 1:
-                    <a href="/view_reciept/{{tx[0]}}">(View)></a>
+                    <a href="/view_receipt/{{tx[0]}}">(View)</a>
                 % else:
                     <a href="/scan_receipt/{{tx[0]}}">+ Add Receipt</a>
                 % end

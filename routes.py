@@ -18,6 +18,52 @@ import re
 from dateutil.parser import parse
 import json
 
+# function to manage categories
+def get_or_create_subcategory_id(main_category_name, sub_category_name, db_cursor):
+    main_category_name = main_category_name.strip()
+    sub_category_name = sub_category_name.strip()
+    
+    if not main_category_name or not sub_category_name:
+        return None
+
+    db_cursor.execute("SELECT main_category_id FROM main_categories WHERE main_category_name = ?", (main_category_name,))
+    main_cat_result = db_cursor.fetchone()
+    
+    if not main_cat_result:
+        print(f"Warning: Main category '{main_category_name}' not found in database.")
+        return None 
+    main_cat_id = main_cat_result[0]
+
+    db_cursor.execute("""
+        SELECT sub_category_id FROM sub_categories 
+        WHERE sub_category_name = ? AND main_category_id = ?
+    """, (sub_category_name, main_cat_id))
+    sub_cat_result = db_cursor.fetchone()
+
+    if sub_cat_result:
+        return sub_cat_result[0]
+    else:
+        db_cursor.execute("""
+            INSERT INTO sub_categories (sub_category_name, main_category_id) 
+            VALUES (?, ?)
+        """, (sub_category_name, main_cat_id))
+        print(f"Created new sub-category '{sub_category_name}' under '{main_category_name}'.")
+        return db_cursor.lastrowid
+    
+    def get_or_create_core_account_id(account_name,account_type,db_cursor):
+        account_name = account_name.strip()
+        account_type = account_type.strip()
+        if not account_name:
+            return None
+        
+        db_cursor.execute("select core_account_id from core_accounts where core_account_name = ?", (account_name,))
+        row = db_cursor.fetchone()
+        if row:
+            return row[0]
+        else:
+            db_cursor.execute("insert into core_accounts(core_account_name,core_account_type) values(?,?)", (account_name,account_type,))
+            return db_cursor.lastrowid
+
 # function to extract scanned receipt details
 def extract_receipt_details(text):
 
@@ -76,9 +122,17 @@ def home():
         con = sqlite3.connect("receipts.sqlite")
         c = con.cursor()
         c.execute(""" 
-        select receipts_id,store,c.category_name,item,quantity,ui,'$' || cast(cost as float) as cost,purchasedate,status 
-        from receipts r
-        join categories c on c.category_id = r.category_id
+            select r.receipt_line_item_id
+            ,rs.store
+            ,c.category_name
+            ,r.description
+            ,r.quantity
+            ,'$' || cast(r.cost as float) as cost
+            ,r.purchasedate
+            from transactions t
+            join receipt_summaries rs on rs.transaction_id = t.transaction_id
+            join receipt_line_items r on r.summary_id = rs.summary_id
+            join sub_categories c on c.sub_category_id = t.sub_category_id;
         """)
 
         result = c.fetchall()
@@ -89,8 +143,10 @@ def home():
     @view("budget")
     def  unified_budget_view():
         today = datetime.now()
-        start_of_month = today.strftime('%Y-%m-01')
-        end_of_month = today .strftime('%Y-%m-%d')
+        default_start = today.replace(day=1).strftime('%Y-%m-%d')
+        default_end = today .strftime('%Y-%m-%d')
+        start_date = request.query.get('start_date', default_start).strip()
+        end_date = request.query.get('end_date', default_end).strip()
 
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
@@ -98,7 +154,7 @@ def home():
             select sum(amount)
             from transactions
             where amount > 0 and transaction_date >= ? and transaction_date <= ?            
-        """, (start_of_month,end_of_month))
+        """, (start_date,end_date))
         total_income_result = c.fetchone() [0]
         total_income = total_income_result if total_income_result is not None else 0.0
 
@@ -106,16 +162,16 @@ def home():
             select sum(amount)
             from transactions
             where amount < 0 and transaction_date >= ? and transaction_date <= ?
-        """,(start_of_month,end_of_month))
+        """,(start_date,end_date))
         transactions_expenses_result = c.fetchone()[0]
         transactions_expenses = transactions_expenses_result if transactions_expenses_result is not None else 0.0
 
         c.execute("""
             select sum(r.cost)
-            from receipts as r
+            from receipt_line_items as r
             join receipt_summaries as rs on r.summary_id = rs.summary_id
-            where rs.purchase_date >= ? and rs.purchase_date <= ?
-        """, (start_of_month,end_of_month))
+            where rs.purchase_date between ? and ?
+        """, (start_date,end_date))
         receipts_expenses_result = c.fetchone()[0]
         receipts_expenses = receipts_expenses_result if receipts_expenses_result is not None else 0.0
 
@@ -126,9 +182,9 @@ def home():
         whats_left = total_income - total_expenses
 
         return dict(
-            title = f"Budget Summary for {today.strftime('%B %Y')}",
-            start_date = start_of_month,
-            end_date = end_of_month,
+            title = "Budget Summary",
+            start_date = start_date,
+            end_date = end_date,
             total_income = total_income,
             total_expenses = total_expenses,
             whats_left = whats_left
@@ -147,7 +203,7 @@ def home():
             con = sqlite3.connect("receipts.sqlite")
             c = con.cursor()
             c.execute("""
-            insert into receipts(store,category,item,quantity,ui,cost,purchasedate)values(?,?,?,?,?,?,?)""",(newStore,newCategory,newItem,newQuantity,newUi,newCost,newPurchasedate,))
+            insert into receipt_line_items(summary_id,category,item,quantity,ui,cost,purchasedate)values(?,?,?,?,?,?,?)""",(newStore,newCategory,newItem,newQuantity,newUi,newCost,newPurchasedate,))
             new_id = c.lastrowid 
             con.commit()
             c.close()
@@ -158,10 +214,22 @@ def home():
 
     @route('/edit/<receipt_id:int>', method='GET')
     @view('edit_receipt') 
-    def show_edit_receipt_form(receipt_id):
+    def show_edit_receipt_form(receipt_line_item_id):
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
-        c.execute("SELECT store, category, item, quantity, ui, cost, purchasedate,status FROM receipts WHERE receipts_id = ?", (receipt_id,))
+        c.execute("""
+            SELECT rs.store
+            ,c.category_name
+            ,r.description
+            ,r.quantity
+            ,r.cost
+            ,r.purchasedate
+            from transactions t
+            join receipt_summaries rs on rs.transaction_id = t.transaction_id
+            join receipt_line_items r on r.summary_id = rs.summary_id
+            join sub_categories c on c.sub_category_id = t.sub_category_id
+            where receipt_line_item_id = ?        
+        """, (receipt_line_item_id,))
         receipt_data = c.fetchone()
         c.close()
         conn.close()
@@ -180,17 +248,24 @@ def home():
         category = request.forms.get('category').strip()
         item = request.forms.get('item').strip()
         quantity = request.forms.get('quantity').strip()
-        ui = request.forms.get('ui').strip()
         cost = request.forms.get('cost').strip() 
         purchasedate = request.forms.get('purchasedate').strip() 
 
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
         c.execute("""
-            UPDATE receipts 
-            SET store = ?, category = ?, item = ?, quantity = ?, ui = ?, cost = ?, purchasedate = ?
-            WHERE receipts_id = ?
-        """, (store, category, item, quantity, ui, float(cost), purchasedate, receipt_id)) # Add status if implemented
+            update receipt_line_items r
+            join receipt_summaries rs on r.summary_id = rs.summary_id
+            join transactions t on rs.transaction_id = t.transaction_id
+            join sub_categories c on c.sub_category_id = t.sub_category_id
+            set rs.store = ?
+            ,c.sub_dcategory_name = ?
+            ,r.description = ?
+            ,r.quantity = ?
+            ,r.cost = ?
+            ,r.purchasedate = ?
+            where r.receipt_line_item_id = ?
+        """, (store, category, item, quantity, float(cost), purchasedate))
         conn.commit()
         c.close()
         conn.close()
@@ -224,12 +299,12 @@ def home():
         category_name = category_name.strip()
         if not category_name:
             return None
-        db_cursor.execute("select category_id from categories where category_name = ?",(category_name,))
+        db_cursor.execute("select sub_category_id from sub_categories where sub_category_name = ?",(category_name,))
         row = db_cursor.fetchone()
         if row:
             return row[0]
         else:
-            db_cursor.execute("insert into categories (category_name) values (?)",(category_name,))
+            db_cursor.execute("insert into sub_categories (sub_category_name) values (?)",(category_name,))
             return db_cursor.lastrowid
 
     def get_or_create_core_account_id(account_name,account_type,db_cursor):
@@ -248,141 +323,105 @@ def home():
 
     @route('/import_transactions', method='POST')
     def do_import_transactions():
+        print("\nDEBUG: 1. Starting 'do_import_transactions'.")
         upload = request.files.get('csvfile')
         account_name = request.forms.get('core_account_name')
         account_type = request.forms.get('core_account_type')
 
         if not upload or not upload.filename.lower().endswith('.csv'):
-            return template('import_transactions_form', error_message = "Upload must be a valid csv file.")
+            return template('import_transactions_form', error_message="You must upload a valid .csv file.")
         if not account_name or not account_name.strip():
             return template('import_transactions_form', error_message="The 'Import From Account' name is required.")
+
+        print("\nDEBUG: 2. Form and file validation passed'.")
 
         try:
             csv_content = upload.file.read().decode('utf-8')
             stream = io.StringIO(csv_content)
             reader = csv.DictReader(stream)
+            print(f"DEBUG: 3. CSV headers found: {reader.fieldnames}")
         except Exception as e:
-            return template('import_transactions_form', error_message = f"Error reading or decoding file: {e}")
-        
-        import_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            print("\nDEBUG: Exiting - Error reading or decoding file: {e}")
+            return template('import_transactions_form', error_message=f"Error reading or decoding file: {e}")
 
+        import_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
 
-        core_account_id = get_or_create_core_account_id(account_name,account_type,c)
+        core_account_id = get_or_create_core_account_id(account_name, account_type, c)
+        print(f"DEBUG: 4. Got/Created Core Account ID: {core_account_id}")
 
-        batch_category_cache = {}
-
-        transacations_to_add = []
+        transactions_to_add = []
         skipped_count = 0
         imported_count = 0
         processing_errors = []
 
+        print("DEBUG: 5. Starting to loop through CSV rows...")
+        row_count = 0
         for row_number, row in enumerate(reader, start=2):
+            row_count+= 1
             try:
                 date_str = row.get("Date", "").strip()
                 description = row.get("Description", "").strip()
-                category_name = row.get("Category", "").strip()
+                main_category_name = row.get("Category", "").strip()
+                sub_category_name = row.get("SubCategory", "").strip()
                 amount_str = row.get("Amount", "").strip()
-	
+
                 if not all([date_str, description, amount_str]):
-                    processing_errors.append(f"Row {row_number}: Missing essential data (Date, Description, or Amount).")
-                    skipped_count += 1
-                    continue
-
-                # add intelligent guess for null category during import
-                if not category_name:
-                    guessed_category = None
-
-                    search_keyword = description.split(' ')[0]
-
-                    if category_name and search_keyword:
-                        batch_category_cache[search_keyword] = category_name
-
-                    if not category_name and search_keyword:
-                        guessed_category = None
-
-                    if search_keyword in batch_category_cache:
-                        guessed_category = batch_category_cache[search_keyword]
-                        print(f"Row {row_number}: Guessed category '{guessed_category}' for '{description}' from this batch.")
-                    else:
-                        c.execute("""
-                                  select cat.category_name
-                                  from transactions t
-                                  join categories cat on t.category_id = cat.category_id
-                                  where t.description like ? and t.category_id is not null
-                                  order by t.import_date desc
-                                  limit 1
-                                  """, ('%' + search_keyword + '%',))
-                        
-                        result = c.fetchone()
-                        if result:
-                            guessed_category = result[0]
-                            print(f"Row {row_number}: Guessed category '{guessed_category}' for description '{description}'")
-
-                    if guessed_category:
-                            category_name = guessed_category
-                    else:
-                        category_name = description
-                        print(f"Row {row_number}: No similar category found for '{description}'. Creating new category.")
-
-                        # end category guessing  
-
+                    print(f"DEBUG: Row {row_number} failed validation: Missing data.")
+                    processing_errors.append(f"Row {row_number}: Missing Date, Description, or Amount."); skipped_count += 1; continue
+            
                 try:
-                    datetime.strptime(date_str, '%Y-%m-%d')
-                    transaction_date = date_str
+                    datetime.strptime(date_str, '%Y-%m-%d'); transaction_date = date_str
                 except ValueError:
-                    processing_errors.append(f"Row {row_number}: Invalid date format '{date_str}'. Expected YYYY-MM-DD.")
-                    skipped_count  += 1
-                    continue
-
+                    processing_errors.append(f"Row {row_number}: Invalid date '{date_str}'."); skipped_count += 1; continue
                 try:
-                    cleaned_amount_str = amount_str.replace(',','')
-                    amount = float(cleaned_amount_str)
+                    cleaned_amount_str = amount_str.replace(',', ''); amount = float(cleaned_amount_str)
                 except ValueError:
-                    processing_errors.append(f"Row {row_number}: Invalid amount format '{amount_str}'.")
-                    skipped_count += 1
-                    continue
+                    processing_errors.append(f"Row {row_number}: Invalid amount '{amount_str}'."); skipped_count += 1; continue
+            
+                sub_category_id = get_or_create_subcategory_id(main_category_name, sub_category_name, c)
 
-                category_id = get_or_create_categories_id(category_name,c)
-
-                c.execute("select 1 from transactions where transaction_date = ? and description = ? and amount = ?", (transaction_date,description,amount))
+                c.execute("SELECT 1 FROM transactions WHERE transaction_date=? AND description=? AND amount=?", (transaction_date, description, amount))
                 if c.fetchone():
-                    skipped_count += 1
+                    skipped_count += 1; 
                     continue
 
-                transacations_to_add.append({
-                    "date": transaction_date,
-                    "description": description,
-                    "amount": amount,
-                    "category_id": category_id, 
+                transactions_to_add.append({
+                    "date": transaction_date, "description": description, "amount": amount,
+                    "sub_category_id": sub_category_id,
                     "core_account_id": core_account_id,
-                    "notes": "Imported",
-                    "import_date": import_timestamp
+                    "notes": "Imported", "import_date": import_timestamp
                 })
-                imported_count += 1
-
+            
             except Exception as e:
-                processing_errors.append(f"Row {row_number}: Unexpected error - {e}")
-                skipped_count += 1 
+                processing_errors.append(f"Row {row_number}: Unexpected error - {e}"); skipped_count += 1; 
                 continue
 
-        if transacations_to_add:
-            sql = "insert into transactions (transaction_date,description,amount,category_id,core_account_id,notes,import_date) values (?,?,?,?,?,?,?)"
-            insert_data = [(tx['date'],tx['description'],tx['amount'],tx['category_id'],tx['core_account_id'],tx['notes'],tx['import_date']) for tx in transacations_to_add]
-            c.executemany(sql,insert_data)
-            imported_count = len(transacations_to_add)
+        print(f"DEBUG: 6. Finished loop. Processed {row_count} rows.")
+        #print(f"DEGUG: {date_str} {description} {main_category_name} {sub_category_name } {amount}")  
+
+        if transactions_to_add:
+            print(f"DEBUG: 7. Preparing to insert {len(transactions_to_add)} new transactions.")
+            sql = "INSERT INTO transactions (transaction_date, description, amount, sub_category_id, core_account_id, notes, import_date) VALUES (?, ?, ?, ?, ?, ?, ?)"
+            insert_data = [(tx['date'], tx['description'], tx['amount'], tx['sub_category_id'], tx['core_account_id'], tx['notes'], tx['import_date']) for tx in transactions_to_add]
+            c.executemany(sql, insert_data)
+            imported_count = len(transactions_to_add)
+            print(f"DEBUG: After transactions_to_add - Inserted {len(transactions_to_add)} new transactions.")
 
         conn.commit()
         conn.close()
+        print("DEBUG: 8. Database commit and close successful.")
 
-        final_message = f"File import complete! Successfully imported {imported_count} new transactions."
-        if skipped_count > 0:
+
+        final_message = f"Import complete! Successfully imported {imported_count} new transactions."
+        if skipped_count > 0: 
             final_message += f" Skipped {skipped_count} existing or invalid rows."
-        if processing_errors:
+        if processing_errors: 
             final_message += f" Errors encountered: {'; '.join(processing_errors[:3])}"
 
-        return template('import_transactions_form', message = final_message)
+        print("DEBUG: 9. Rendering final template.")
+        return template('import_transactions_form', message=final_message)
             
     # end csv file import process
 
@@ -432,13 +471,13 @@ def home():
                   ,t.transaction_date
                   ,t.description
                   ,t.amount
-                  ,cat.category_name as category_name
+                  ,cat.sub_category_name as category_name
                   ,ca.core_account_name
                   ,t.has_receipt
                   ,t.import_date
                   ,t.last_modified_ts
             from transactions t
-            left join categories cat on t.category_id = cat.category_id
+            left join sub_categories cat on t.sub_category_id = cat.sub_category_id
             left join core_accounts ca on t.core_account_id = ca.core_account_id
             where {where_sql}
             order by t.transaction_date desc, t.transaction_id desc
@@ -566,7 +605,7 @@ def home():
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
     
-        c.execute("SELECT category_id, category_name FROM categories ORDER BY category_name")
+        c.execute("SELECT sub_category_id, sub_category_name FROM sub_categories ORDER BY sub_category_name")
         all_categories = c.fetchall()
         conn.close()
     
@@ -627,24 +666,24 @@ def home():
         # query to build report
         c.execute("""
         select 
-            category_name
+            sub_category_name
             ,sum(expense_amount) as total_amount
         from (
             select
-                cat.category_name as category_name
+                cat.sub_category_name as category_name
                 ,abs(t.amount) as expense_amount
             from transactions as t
-            join categories as cat on t.category_id = cat.category_id
+            join sub_categories as cat on t.sub_category_id = cat.sub_category_id
             where t.amount < 0 and t.transaction_date between ? and ?
 
             union all
 
             select 
-                cat.category_name as category_name
+                cat.sub_category_name as category_name
                 ,r.cost as expense_amount
             from receipts as r 
             join receipt_summaries as rs on r.summary_id = rs.summary_id
-            join categories as cat on r.category_id = cat.category_id
+            join sub_categories as cat on r.sub_category_id = cat.sub_category_id
             where rs.purchase_date between ? and ?
         ) as all_expenses
         where category_name is not null
@@ -693,7 +732,7 @@ def home():
                     cat.category_name AS category_name,
                     t.amount AS amount
                 FROM transactions AS t
-                LEFT JOIN categories AS cat ON t.category_id = cat.category_id
+                LEFT JOIN sub_categories AS cat ON t.sub_category_id = cat.sub_category_id
                 WHERE t.transaction_date BETWEEN ? AND ?
 
                 UNION ALL
@@ -703,11 +742,11 @@ def home():
                     -r.cost AS amount
                 FROM receipts AS r
                 JOIN receipt_summaries AS rs ON r.summary_id = rs.summary_id
-                LEFT JOIN categories AS cat ON r.category_id = cat.category_id
+                LEFT JOIN sub_categories AS cat ON r.sub_category_id = cat.sub_category_id
                 WHERE rs.purchase_date BETWEEN ? AND ?
             ) AS all_entries
-            GROUP BY category_name
-            ORDER BY category_name
+            GROUP BY sub_category_name
+            ORDER BY sub_category_name
         """, (start_of_month, end_of_month, start_of_month, end_of_month))
 
         results = c.fetchall()
@@ -741,7 +780,7 @@ def home():
     def manage_categories():
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
-        c.execute("select category_id,category_name from categories order by category_name")
+        c.execute("select sub_category_id,sub_category_name from sub_categories order by sub_category_name")
         all_categories = c.fetchall()
         conn.close()
 
@@ -758,9 +797,9 @@ def home():
             c = conn.cursor()
 
             c.execute("BEGIN TRANSACTION;")
-            c.execute("update transactions set category_id = NULL where category_id = ?",(category_id,))
-            c.execute("update receipts set category_id = NULL where category_id = ?", (category_id,))
-            c.execute("delete from categories where category_id = ?", (category_id,))
+            c.execute("update transactions set sub_category_id = NULL where sub_category_id = ?",(category_id,))
+            c.execute("update receipt_line_items set sub_category_id = NULL where sub_category_id = ?", (category_id,))
+            c.execute("delete from sub_categories where sub_category_id = ?", (category_id,))
             conn.commit()
 
             return json.dumps({'success': True})
@@ -787,7 +826,7 @@ def home():
             
             conn = sqlite3.connect(DB_NAME)
             c = conn.cursor()
-            c.execute("update categories set category_name = ? where category_id = ?", (new_name,category_id))
+            c.execute("update sub_categories set sub_category_name = ? where category_id = ?", (new_name,category_id))
             conn.commit()
             conn.close()
 
@@ -796,3 +835,113 @@ def home():
             import traceback
             traceback.print_exc()
             return json.dumps({'success': False, 'message': str(e)})
+        
+        # end manage categories 
+
+        #begin line item receipts view
+
+    @route('/view_receipt/<transaction_id:int>')
+    @view('view_receipt_details') # We will create this new template
+    def view_receipt(transaction_id):
+        conn = sqlite3.connect(DB_NAME)
+    
+        conn.row_factory = sqlite3.Row 
+        c = conn.cursor()
+
+        c.execute("""
+            SELECT summary_id, store, purchase_date, total_amount 
+            FROM receipt_summaries 
+            WHERE transaction_id = ?
+        """, (transaction_id,))
+        summary = c.fetchone()
+
+        line_items = []
+        if summary:
+            c.execute("""
+                SELECT description, quantity, cost 
+                FROM receipt_line_items 
+                WHERE summary_id = ?
+            """, (summary['summary_id'],))
+            line_items = c.fetchall()
+    
+        conn.close()
+
+        return dict(
+            summary=summary,
+            line_items=line_items,
+            transaction_id=transaction_id,
+            title="View Receipt Details"
+        )
+
+    @route('/manage/descriptions')
+    @view('manage_descriptions') # We will create this new template
+    def manage_descriptions():
+        conn = sqlite3.connect(DB_NAME)
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+
+    # Query 1: Get all unique descriptions and their most recently assigned category details.
+    # This is a complex query that uses a subquery with row_number() to find the latest
+    # transaction for each description and then joins to get the category names.
+        c.execute("""
+            WITH LatestTransactions AS (
+                SELECT
+                    t.description,
+                    t.sub_category_id,
+                    ROW_NUMBER() OVER(PARTITION BY t.description ORDER BY t.transaction_date DESC, t.transaction_id DESC) as rn
+                FROM transactions t
+            )
+            SELECT
+                lt.description,
+                sc.sub_category_id,
+                sc.sub_category_name,
+                mc.main_category_id,
+                mc.main_category_name
+            FROM LatestTransactions lt
+            LEFT JOIN sub_categories sc ON lt.sub_category_id = sc.sub_category_id
+            LEFT JOIN main_categories mc ON sc.main_category_id = mc.main_category_id
+            WHERE lt.rn = 1
+            ORDER BY lt.description
+        """)
+        description_data = [dict(row) for row in c.fetchall()]
+
+    # Query 2: Get all main categories for the dropdown
+        c.execute("SELECT main_category_id, main_category_name FROM main_categories ORDER BY main_category_name")
+        all_main_categories = [dict(row) for row in c.fetchall()]
+
+    # Query 3: Get all sub-categories for the dropdowns
+        c.execute("SELECT sub_category_id, sub_category_name, main_category_id FROM sub_categories ORDER BY sub_category_name")
+        all_sub_categories = [dict(row) for row in c.fetchall()]
+
+        conn.close()
+
+        return dict(
+            description_data=description_data,
+            all_main_categories=all_main_categories,
+            all_sub_categories_json=json.dumps(all_sub_categories),
+            title="Manage Transaction Descriptions"
+        )
+    
+    # In routes.py
+
+    @route('/update/description_category', method='POST')
+    def update_description_category():
+        description = request.forms.get('description')
+        new_sub_category_id = request.forms.get('sub_category_id')
+
+        if not description or not new_sub_category_id:
+        # We can add a more user-friendly error page later
+            return "Error: Missing description or new sub-category selection."
+
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+    # This is the powerful bulk update
+        c.execute(
+            "UPDATE transactions SET sub_category_id = ? WHERE description = ?",
+            (new_sub_category_id, description)
+        )
+        conn.commit()
+        conn.close()
+
+    # Redirect back to the management page to see the changes
+        redirect('/manage/descriptions')
