@@ -1,10 +1,15 @@
 %# views/manage_descriptions.tpl
-% rebase('base.tpl', title=title, load_base_style=True, current_year=current_year)
+% rebase('base.tpl', title=title, load_base_style=True, current_year=current_year, page_specific_css=['manage-descriptions-style.css'])
 
-<h2>Manage Transaction Categorization</h2>
-<p>
-    Select a new Main and Sub-Category to update all transactions sharing the same description.
-</p>
+<div class="manage-descriptions">
+    <h2>Manage Transaction Categorization</h2>
+    <p>
+        Select a new Main and Sub-Category for Transactions.
+    </p>
+    <p>
+        Categories will be updated for all Transactions with the same Description.
+    </p>    
+</div>
 
 <div class="table-box">
     <table>

@@ -115,29 +115,6 @@ DB_NAME = "receipts.sqlite"
 @route('/home')
 @view('index')
 def home():
-    
-    @route('/list')
-    @view('list')
-    def list():
-        con = sqlite3.connect("receipts.sqlite")
-        c = con.cursor()
-        c.execute(""" 
-            select r.receipt_line_item_id
-            ,rs.store
-            ,c.category_name
-            ,r.description
-            ,r.quantity
-            ,'$' || cast(r.cost as float) as cost
-            ,r.purchasedate
-            from transactions t
-            join receipt_summaries rs on rs.transaction_id = t.transaction_id
-            join receipt_line_items r on r.summary_id = rs.summary_id
-            join sub_categories c on c.sub_category_id = t.sub_category_id;
-        """)
-
-        result = c.fetchall()
-        output = template("list",rows = result)
-        return output
    
     @route("/budget")
     @view("budget")
@@ -189,28 +166,6 @@ def home():
             total_expenses = total_expenses,
             whats_left = whats_left
         )
-    
-    @route("/new",method = "GET")
-    def new_item(): 
-        if request.GET.get("save","").strip():
-            newStore = request.GET.get("store","").strip()
-            newCategory = request.GET.get("category","").strip()
-            newItem = request.GET.get("item","").strip()
-            newQuantity = request.GET.get("quantity","").strip()
-            newUi = request.GET.get("ui","").strip()
-            newCost = request.GET.get("cost","").strip()
-            newPurchasedate = request.GET.get("purchasedate","").strip()
-            con = sqlite3.connect("receipts.sqlite")
-            c = con.cursor()
-            c.execute("""
-            insert into receipt_line_items(summary_id,category,item,quantity,ui,cost,purchasedate)values(?,?,?,?,?,?,?)""",(newStore,newCategory,newItem,newQuantity,newUi,newCost,newPurchasedate,))
-            new_id = c.lastrowid 
-            con.commit()
-            c.close()
-            url = "http://localhost:5555/list"
-            return"<p>The new receipt was inserted into the database, the ID is {0} </p><p><a href = http://localhost:5555/list>List</a></p><p><a href = http://localhost:5555/new>New Expense</a></p>".format(new_id)
-        else:
-            return template("new_receipt.tpl") 
 
     @route('/edit/<receipt_id:int>', method='GET')
     @view('edit_receipt') 
@@ -272,21 +227,6 @@ def home():
 
         from bottle import redirect 
         redirect('/list')     
-    
-    @route("/newbudget",method = "GET") 
-    def new_budget():
-        if request.GET.get("update","").strip():
-            newAmount = request.GET.get("amount","").strip()
-            con = sqlite3.connect("receipts.sqlite")
-            c = con.cursor()
-            c.execute("""
-            insert into budget(amount)values(?)""",(newAmount,))
-            new_id = c.lastrowid 
-            con.commit()
-            c.close()
-            return"<p>The new budget amount was inserted into the database, the ID is {0} </p></p><a href = http://localhost:5555/budget>Budget</a>".format(new_id)
-        else:    
-            return template("new_budget.tpl")
 
     @route('/import_transactions', method='GET')
     @view('import_transactions_form')
@@ -656,8 +596,8 @@ def home():
     @route('/api/spending-by-category')
     def api_spending_by_category ():
         today = datetime.now()
-        start_of_month = today.strftime('%Y-%m-01')
-        end_of_month = today .strftime('%Y-%m-d')
+        start_date = today.strftime('%Y-%m-%d')
+        end_date = today .strftime('%Y-%m-%d')
 
         conn = sqlite3.connect(DB_NAME)
         conn.row_factory = sqlite3.Row
@@ -689,7 +629,7 @@ def home():
         where category_name is not null
         group by category_name
         order by total_amount desc
-        """, (start_of_month,end_of_month,start_of_month,end_of_month))
+        """, (start_date,end_date,start_date,end_date))
 
         results = c.fetchall()
         conn.close()
@@ -716,8 +656,8 @@ def home():
     @route('/api/category-totals')
     def api_category_totals():
         today = datetime.now()
-        start_of_month = today.strftime('%Y-%m-01')
-        end_of_month = today .strftime('%Y-%m-d')
+        start_date = today.strftime('%Y-%m-%d')
+        end_date = today .strftime('%Y-%m-%d')
 
         conn = sqlite3.connect(DB_NAME)
         conn.row_factory = sqlite3.Row
@@ -747,7 +687,7 @@ def home():
             ) AS all_entries
             GROUP BY sub_category_name
             ORDER BY sub_category_name
-        """, (start_of_month, end_of_month, start_of_month, end_of_month))
+        """, (start_date, end_date, start_date, end_date))
 
         results = c.fetchall()
         conn.close()

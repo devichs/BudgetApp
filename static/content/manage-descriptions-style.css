@@ -1,0 +1,56 @@
+.manage-descriptions { 
+    max-width: 600px; 
+    margin: 20px auto; 
+    padding: 20px; 
+    background-color: #f9f9f9; border: 1px solid #ddd; 
+    border-radius: 8px; 
+    text-align: center; 
+}
+.manage-descriptions h2 { 
+    margin-top: 0; 
+}
+
+.manage-descriptions p {
+    margin-top: 0;
+}
+
+.table-box {
+	margin-left: auto;
+	margin-right: auto;
+	width: 1210px;
+}
+
+th {
+	text-transform: uppercase;
+	letter-spacing: 0.1em;
+	font-size: 80%;
+	border-bottom: 2px solid #111111;
+	border-top: 1px solid #999;
+	text-align: center;
+}
+
+td {
+	/*padding: 7px 10px 10px 10px;*/
+    table-layout: auto;
+    font-size: 70%;
+}
+
+tr.even {
+	background-color: #efefef;
+}
+
+tr:hover {
+	background-color: #c3e6e5;
+}
+
+.actions { 
+    text-align: center; 
+}
+
+.actions button {
+     margin: 0 5px; 
+    }
+
+td input[type="text"] { 
+    width: 95%; padding: 5px; 
+}
