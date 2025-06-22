@@ -656,8 +656,11 @@ def home():
     @route('/api/category-totals')
     def api_category_totals():
         today = datetime.now()
-        start_date = today.strftime('%Y-%m-%d')
-        end_date = today .strftime('%Y-%m-%d')
+        default_start = today.replace(day=1).strftime('%Y-%m-%d')
+        default_end = today.strftime('%Y-%m-%d')
+
+        start_date = request.query.get('start_date', default_start).strip()
+        end_date = request.query.get('end_date', default_end).strip()
 
         conn = sqlite3.connect(DB_NAME)
         conn.row_factory = sqlite3.Row
@@ -665,27 +668,28 @@ def home():
 
         c.execute("""
             SELECT
-                category_name,
+                sub_category_name,
                 SUM(amount) AS net_total
             FROM (
                 SELECT
-                    cat.category_name AS category_name,
+                    sc.sub_category_name AS sub_category_name,
                     t.amount AS amount
                 FROM transactions AS t
-                LEFT JOIN sub_categories AS cat ON t.sub_category_id = cat.sub_category_id
+                LEFT JOIN sub_categories AS sc ON t.sub_category_id = sc.sub_category_id
                 WHERE t.transaction_date BETWEEN ? AND ?
 
                 UNION ALL
 
                 SELECT
-                    cat.category_name AS category_name,
-                    -r.cost AS amount
-                FROM receipts AS r
-                JOIN receipt_summaries AS rs ON r.summary_id = rs.summary_id
-                LEFT JOIN sub_categories AS cat ON r.sub_category_id = cat.sub_category_id
+                    sc.sub_category_name AS sub_category_name,
+                    -rl.cost AS amount
+                FROM receipt_line_items AS rl
+                JOIN receipt_summaries AS rs ON rl.summary_id = rs.summary_id
+                LEFT JOIN sub_categories AS sc ON rl.sub_category_id = sc.sub_category_id
                 WHERE rs.purchase_date BETWEEN ? AND ?
-            ) AS all_entries
+            )
             GROUP BY sub_category_name
+            HAVING  net_total is not null
             ORDER BY sub_category_name
         """, (start_date, end_date, start_date, end_date))
 
@@ -700,7 +704,15 @@ def home():
     @route('/reports/category-totals')
     @view('category_totals_report')
     def show_category_totals_report():
-        return dict(title="Category Totals Report")
+        today = datetime.now()
+        start_date = today.replace(day=1).strftime('%Y-%m-%d')
+        end_date = today.strftime('%Y-%m-%d')
+
+        return dict(
+            title="Category Totals Report",
+            start_date=start_date,
+            end_date=end_date
+        )
     
     # end category totals report
 
