@@ -5,13 +5,6 @@
 % rebase('base.tpl', title='Edit Expense ID: ' + str(no), load_base_style=True, page_specific_css=['edit-receipts-style.css'])
 % current_status = old_data[7] if old_data and len(old_data) > 7 else 'open'
 
-<ul class = "ulmainmenu">
-	<li class = "limainmenu"><a class = "amenu" href = "/budget">Go To Budget</a></li>
-	<li class = "limainmenu"><a class = "amenu" href = "/list">View Expense List</a></li>
-	<li class = "limainmenu"><a class = "amenu" href = "/list">Cancel Edit Expense</a></li>	
-	<li class = "limainmenu"><a class = "amenu" href = "http://localhost:5555/">Home</a></li>	
-</ul>
-
 <fieldset>
     <legend>Edit the expense with ID = {{no}}</legend>
 

@@ -1,0 +1,93 @@
+.manage-categories { 
+    max-width: 600px; 
+    margin: 20px auto; 
+    padding: 20px; 
+    background-color: #f9f9f9; border: 1px solid #ddd; 
+    border-radius: 8px; 
+    text-align: center; 
+}
+.manage-categories h2 { 
+    margin-top: 0; 
+}
+
+.filter-form { 
+    border: 1px solid #ddd; 
+    padding: 15px; 
+    margin-top: 20px; 
+    border-radius: 5px; 
+}
+
+.filter-form .form-row { 
+    display: flex; 
+    gap: 20px; 
+    margin-bottom: 10px; 
+    justify-content: center; 
+    align-items: center; 
+}
+
+.filter-form .form-group { 
+    flex: 1; 
+}
+
+.filter-form label { 
+    display: block; 
+    margin-bottom: 5px; 
+    font-size: 14px; 
+    text-align: left;
+}
+
+.filter-form input, .filter-form button { 
+    width: 100%; 
+    padding: 8px; 
+    box-sizing: border-box; 
+}
+
+.filter-form .form-row .form-group select .dropdown {
+    width: 100%; 
+    padding: 8px; 
+    box-sizing: border-box; 
+    text-align: center;
+}
+
+.table-box {
+	margin-left: auto;
+	margin-right: auto;
+	width: 500px;
+}
+
+table.sortable {
+	width: 500px;
+}
+
+th,td {
+	padding: 7px 10px 10px 10px;
+}
+
+th {
+	text-transform: uppercase;
+	letter-spacing: 0.1em;
+	font-size: 90%;
+	border-bottom: 2px solid #111111;
+	border-top: 1px solid #999;
+	text-align: left;
+}
+
+tr.even {
+	background-color: #efefef;
+}
+
+tr:hover {
+	background-color: #c3e6e5;
+}
+
+.actions { 
+    text-align: center; 
+}
+
+.actions button {
+     margin: 0 5px; 
+    }
+
+td input[type="text"] { 
+    width: 95%; padding: 5px; 
+}
